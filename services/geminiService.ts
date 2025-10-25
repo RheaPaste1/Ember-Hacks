@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Concept } from '../types';
 
 if (!process.env.API_KEY) {
@@ -28,6 +28,31 @@ const fileToTextPart = async (file: File) => {
     return `\n--- File: ${file.name} ---\n${text}\n--- End File: ${file.name} ---`;
 }
 
+export const generateVisual = async (prompt: string): Promise<string> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [{ text: prompt }],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
+        });
+        
+        for (const part of response.candidates[0].content.parts) {
+            if (part.inlineData) {
+                return part.inlineData.data;
+            }
+        }
+        throw new Error("No image data found in response.");
+
+    } catch (error) {
+        console.error("Error generating visual:", error);
+        throw new Error("Failed to generate visual from AI.");
+    }
+};
+
 export const generateLesson = async (topic: string, files: File[], notes: string): Promise<Concept[]> => {
     const textFiles = files.filter(f => f.type.startsWith('text/') || /\.(java|py|js|ts|html|css|json|md|c|cpp|cs)$/i.test(f.name));
     const imageFiles = files.filter(f => f.type.startsWith('image/'));
@@ -49,8 +74,8 @@ export const generateLesson = async (topic: string, files: File[], notes: string
         Based on the topic, user instructions, and the content of these files (including any images provided), identify the key computer science terms and concepts. For each concept, provide the following:
         1.  **definition:** A clear and concise explanation.
         2.  **notes:** Extra details, important considerations, or common edge cases. For UML diagrams, explain arrow types and access modifiers (+, -, #, ~).
-        3.  **visualExample:** A descriptive prompt that could be used to generate a visual aid for this concept. For example, for a UML diagram, describe the diagram. For an algorithm, describe a flowchart.
-        4.  **codeExample:** A relevant code snippet in an appropriate language that demonstrates the concept, formatted with markdown.
+        3.  **visualExample:** If the concept is best represented by a diagram (like a UML class diagram, a flowchart for an algorithm, or an architecture diagram), provide a detailed, descriptive prompt that an image generation AI could use to create this diagram. For concepts that don't need a visual diagram, leave this field as an empty string ("").
+        4.  **codeExample:** A relevant code snippet in an appropriate language that demonstrates the concept, formatted with markdown. If a concept is purely visual (e.g., a UML diagram with a detailed 'visualExample' prompt), this field can be an empty string.
 
         Analyze the images for relevant concepts like diagrams, architectures, or UI mockups.
     `;

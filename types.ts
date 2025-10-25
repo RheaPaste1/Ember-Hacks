@@ -2,8 +2,11 @@
 export interface Annotation {
   id: string;
   conceptId: string;
+  fieldName: 'definition' | 'notes' | 'codeExample';
   targetText: string;
   note: string;
+  startIndex: number;
+  endIndex: number;
 }
 
 export interface Concept {

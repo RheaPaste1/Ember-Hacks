@@ -1,14 +1,10 @@
-
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
-import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, TrashIcon } from './Icons';
+import { VisualExampleDisplay } from './VisualExampleDisplay';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from './Icons';
 
-const escapeRegExp = (string: string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-};
-
-const Highlight: React.FC<{ annotation: Annotation, onClick: () => void }> = ({ annotation, onClick }) => {
+const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEvent<HTMLElement>) => void }> = ({ annotation, onClick }) => {
     return (
         <mark 
             onClick={onClick}
@@ -22,42 +18,34 @@ const Highlight: React.FC<{ annotation: Annotation, onClick: () => void }> = ({ 
 const HighlightedContent: React.FC<{ 
     text: string, 
     conceptId: string,
+    fieldName: 'definition' | 'notes' | 'codeExample',
     annotations: Annotation[],
     onHighlightClick: (annotation: Annotation, target: HTMLElement) => void 
-}> = ({ text, conceptId, annotations, onHighlightClick }) => {
+}> = ({ text, conceptId, fieldName, annotations, onHighlightClick }) => {
 
-    const relevantAnnotations = annotations.filter(a => a.conceptId === conceptId);
+    const relevantAnnotations = annotations
+        .filter(a => a.conceptId === conceptId && a.fieldName === fieldName)
+        .sort((a, b) => a.startIndex - b.startIndex);
 
     if (!text || relevantAnnotations.length === 0) {
         return <pre className="text-sm font-sans whitespace-pre-wrap break-words">{text}</pre>;
     }
-
-    const matches: { start: number; end: number; annotation: Annotation }[] = [];
-    relevantAnnotations.forEach(annotation => {
-        const regex = new RegExp(escapeRegExp(annotation.targetText), 'g');
-        let match;
-        while ((match = regex.exec(text)) !== null) {
-            matches.push({ start: match.index, end: match.index + match[0].length, annotation });
-        }
-    });
     
-    matches.sort((a, b) => a.start - b.start);
-
     const parts: React.ReactNode[] = [];
     let lastIndex = 0;
 
-    matches.forEach(({ start, end, annotation }, index) => {
-        if (start > lastIndex) {
-            parts.push(text.substring(lastIndex, start));
+    relevantAnnotations.forEach((annotation) => {
+        if (annotation.startIndex > lastIndex) {
+            parts.push(text.substring(lastIndex, annotation.startIndex));
         }
         parts.push(
             <Highlight 
-                key={`${annotation.id}-${index}`} 
+                key={annotation.id} 
                 annotation={annotation} 
                 onClick={(e) => onHighlightClick(annotation, e.currentTarget)} 
             />
         );
-        lastIndex = end;
+        lastIndex = annotation.endIndex;
     });
 
     if (lastIndex < text.length) {
@@ -77,9 +65,11 @@ const NotePopover: React.FC<{
     onDelete: () => void;
     onClose: () => void;
     popoverStyle: React.CSSProperties;
-}> = ({ annotation, onSave, onDelete, onClose, popoverStyle }) => {
+    isNew: boolean;
+}> = ({ annotation, onSave, onDelete, onClose, popoverStyle, isNew }) => {
     const [noteText, setNoteText] = useState(annotation.note);
     const popoverRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -91,17 +81,25 @@ const NotePopover: React.FC<{
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [onClose]);
     
+    useEffect(() => {
+        if (isNew) {
+            textareaRef.current?.focus();
+        }
+    }, [isNew]);
+    
     return (
-        <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 flex flex-col">
+        <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 flex flex-col popover-active">
             <h5 className="text-sm font-bold text-gray-300 mb-2">Note for: <span className="font-normal italic text-blue-400">"{annotation.targetText}"</span></h5>
             <textarea
+                ref={textareaRef}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Write your note here..."
                 className="w-full h-32 bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                aria-label="Annotation note"
             />
             <div className="mt-3 flex justify-between items-center">
-                <button onClick={() => onDelete()} className="p-2 text-gray-400 hover:text-red-400">
+                <button onClick={() => onDelete()} className="p-2 text-gray-400 hover:text-red-400" aria-label="Delete note">
                     <TrashIcon className="w-5 h-5"/>
                 </button>
                 <div className="space-x-2">
@@ -113,66 +111,97 @@ const NotePopover: React.FC<{
     );
 };
 
-// Fix: Define LessonViewProps interface.
 interface LessonViewProps {
     lesson: Lesson;
     onUpdateLesson: (updatedLesson: Lesson) => void;
 }
 
+const getSelectionOffsets = (element: HTMLElement) => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    if (!element.contains(range.commonAncestorContainer)) {
+        return null;
+    }
+
+    const preSelectionRange = document.createRange();
+    preSelectionRange.selectNodeContents(element);
+    preSelectionRange.setEnd(range.startContainer, range.startOffset);
+    const startIndex = preSelectionRange.toString().length;
+
+    return {
+        startIndex,
+        endIndex: startIndex + range.toString().length,
+    };
+};
+
 export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }) => {
     const [isChatbotOpen, setIsChatbotOpen] = useState(true);
-    const [popover, setPopover] = useState<{ type: 'add' | 'edit', data: any, style: React.CSSProperties } | null>(null);
+    const [popover, setPopover] = useState<{ data: Annotation, style: React.CSSProperties, isNew: boolean } | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
-    const handleMouseUp = (conceptId: string) => (e: React.MouseEvent) => {
-        if (popover) return;
+    const handleMouseUp = (conceptId: string, fieldName: 'definition' | 'notes' | 'codeExample') => (e: React.MouseEvent) => {
+        if (popover) {
+            if (!(e.target as HTMLElement).closest('.popover-active')) {
+                setPopover(null);
+            }
+            return;
+        }
+
         const selection = window.getSelection();
-        if (selection && selection.toString().trim().length > 0) {
-            const range = selection.getRangeAt(0);
-            const rect = range.getBoundingClientRect();
-            
-            setPopover({
-                type: 'add',
-                data: {
-                    text: selection.toString().trim(),
-                    conceptId: conceptId,
-                },
-                style: {
-                    top: `${rect.bottom + window.scrollY + 5}px`,
-                    left: `${rect.left + window.scrollX}px`,
-                }
-            });
-            selection.removeAllRanges();
+        const selectionText = selection?.toString() ?? '';
+
+        if (selection && selectionText.trim().length > 0) {
+            if ((selection.anchorNode?.parentElement as HTMLElement)?.tagName === 'MARK' || (selection.focusNode?.parentElement as HTMLElement)?.tagName === 'MARK') {
+                 selection.removeAllRanges();
+                 return;
+            }
+
+            const offsets = getSelectionOffsets(e.currentTarget as HTMLElement);
+            if (offsets) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                selection.removeAllRanges();
+
+                const newAnnotation: Annotation = {
+                    id: self.crypto.randomUUID(),
+                    conceptId,
+                    fieldName,
+                    targetText: selectionText,
+                    note: '',
+                    startIndex: offsets.startIndex,
+                    endIndex: offsets.endIndex,
+                };
+                
+                onUpdateLesson({ ...lesson, annotations: [...(lesson.annotations || []), newAnnotation] });
+
+                setPopover({
+                    data: newAnnotation,
+                    style: {
+                        top: `${rect.bottom + window.scrollY + 5}px`,
+                        left: `${rect.left + window.scrollX}px`,
+                    },
+                    isNew: true,
+                });
+            }
         }
     };
     
-    const handleAddAnnotation = () => {
-        if (popover?.type !== 'add') return;
-        const { text, conceptId } = popover.data;
-        const newAnnotation: Annotation = {
-            id: self.crypto.randomUUID(),
-            conceptId,
-            targetText: text,
-            note: '',
-        };
-        onUpdateLesson({ ...lesson, annotations: [...(lesson.annotations || []), newAnnotation] });
-        setPopover(null);
-    };
-
     const handleHighlightClick = (annotation: Annotation, target: HTMLElement) => {
         const rect = target.getBoundingClientRect();
         setPopover({
-            type: 'edit',
             data: annotation,
             style: {
                 top: `${rect.bottom + window.scrollY + 5}px`,
                 left: `${rect.left + window.scrollX}px`,
-            }
+            },
+            isNew: false,
         });
     };
     
     const handleSaveAnnotation = (note: string) => {
-        if (popover?.type !== 'edit') return;
+        if (!popover) return;
         const updatedAnnotations = (lesson.annotations || []).map(a => 
             a.id === popover.data.id ? { ...a, note } : a
         );
@@ -181,7 +210,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
     };
 
     const handleDeleteAnnotation = () => {
-        if (popover?.type !== 'edit') return;
+        if (!popover) return;
         const updatedAnnotations = (lesson.annotations || []).filter(a => a.id !== popover.data.id);
         onUpdateLesson({ ...lesson, annotations: updatedAnnotations });
         setPopover(null);
@@ -189,7 +218,16 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
     
     return (
         <div className="flex h-full overflow-hidden">
-            <main ref={contentRef} className="flex-1 overflow-y-auto p-8" onMouseUp={() => { if (window.getSelection()?.toString().length === 0 && popover?.type === 'add') setPopover(null)}}>
+            <main 
+                ref={contentRef} 
+                className="flex-1 overflow-y-auto p-8" 
+                onMouseUp={(e) => { 
+                    const selection = window.getSelection();
+                    if (selection?.toString().length === 0 && popover && !(e.target as HTMLElement).closest('.popover-active')) {
+                        setPopover(null);
+                    }
+                }}
+            >
                 <div className="max-w-4xl mx-auto">
                     <h1 className="text-4xl font-bold mb-4 text-white tracking-tight">{lesson.topic}</h1>
 
@@ -197,54 +235,52 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                         <div key={concept.id} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-lg">
                             <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
                             
-                            <div className="space-y-6" onMouseUp={handleMouseUp(concept.id)}>
+                            <div className="space-y-6">
                                 <div>
                                     <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Definition</h4>
-                                    <div className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                        <HighlightedContent text={concept.definition} conceptId={concept.id} annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                    <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                        <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
                                     </div>
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Notes & Edge Cases</h4>
-                                    <div className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                         <HighlightedContent text={concept.notes} conceptId={concept.id} annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                    <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                         <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
                                     </div>
                                 </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Visual Example</h4>
-                                    <div className="p-4 border border-dashed border-gray-600 rounded-md bg-gray-900">
-                                        <p className="italic text-gray-400">{concept.visualExample}</p>
-                                        <img src={`httpshttps://picsum.photos/seed/${concept.id}/600/300`} alt={concept.visualExample} className="mt-4 rounded-md" />
+                                
+                                {concept.visualExample && concept.visualExample.trim() !== '' && (
+                                    <div>
+                                        <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Visual Example</h4>
+                                        <div className="p-4 border border-dashed border-gray-600 rounded-md bg-gray-900/50">
+                                            <p className="italic text-gray-400 text-sm mb-2">Prompt: "{concept.visualExample}"</p>
+                                            <VisualExampleDisplay prompt={concept.visualExample} />
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Code Example</h4>
-                                    <div className="bg-gray-900 rounded-md p-4 select-text">
-                                        <HighlightedContent text={concept.codeExample} conceptId={concept.id} annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                )}
+
+                                {concept.codeExample && concept.codeExample.trim() !== '' && (
+                                    <div>
+                                        <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Code Example</h4>
+                                        <div onMouseUp={handleMouseUp(concept.id, 'codeExample')} className="bg-gray-900 rounded-md p-4 select-text">
+                                            <HighlightedContent text={concept.codeExample} conceptId={concept.id} fieldName="codeExample" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     ))}
                 </div>
             </main>
             
-             {popover?.type === 'add' && (
-                <div style={popover.style} className="fixed z-20">
-                    <button onClick={handleAddAnnotation} className="flex items-center px-3 py-1.5 bg-gray-700 text-white rounded-md shadow-lg hover:bg-blue-600">
-                        <PlusIcon className="w-4 h-4 mr-2"/>
-                        Add Note
-                    </button>
-                </div>
-            )}
-
-            {popover?.type === 'edit' && (
+            {popover && (
                 <NotePopover 
                     annotation={popover.data}
                     onSave={handleSaveAnnotation}
                     onDelete={handleDeleteAnnotation}
                     onClose={() => setPopover(null)}
                     popoverStyle={popover.style}
+                    isNew={popover.isNew}
                 />
             )}
             
