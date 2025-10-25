@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { generateLesson } from '../services/geminiService';
 import { Lesson, Concept } from '../types';
-import { SpinnerIcon, PlusIcon } from './Icons';
+import { SpinnerIcon, PlusIcon, CodeIcon, ImageIcon, TextFileIcon } from './Icons';
 
 interface NewLessonFormProps {
   onLessonCreated: (lesson: Lesson) => void;
+}
+
+const getFileIcon = (file: File) => {
+    if (file.type.startsWith('image/')) {
+        return <ImageIcon className="w-5 h-5 text-purple-400 flex-shrink-0" />;
+    }
+    if (/\.(java|py|js|ts|c|cpp|cs|html|css|json)$/i.test(file.name)) {
+        return <CodeIcon className="w-5 h-5 text-blue-400 flex-shrink-0" />;
+    }
+    return <TextFileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />;
 }
 
 export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated }) => {
@@ -101,8 +111,13 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
                     {files.length > 0 && (
                         <div>
                             <h3 className="text-sm font-medium text-gray-300">Selected files:</h3>
-                            <ul className="mt-2 space-y-1 text-sm text-gray-400 max-h-40 overflow-y-auto border border-gray-700 rounded p-2 bg-gray-900">
-                                {files.map((file, i) => <li key={i} className="truncate">{file.name}</li>)}
+                            <ul className="mt-2 space-y-2 text-sm text-gray-400 max-h-40 overflow-y-auto border border-gray-700 rounded p-3 bg-gray-900">
+                                {files.map((file, i) => (
+                                    <li key={i} className="flex items-center space-x-2">
+                                        {getFileIcon(file)}
+                                        <span className="truncate">{file.name}</span>
+                                    </li>
+                                ))}
                             </ul>
                         </div>
                     )}

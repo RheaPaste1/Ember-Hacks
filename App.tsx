@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { NewLessonForm } from './components/NewLessonForm';
 import { LessonView } from './components/LessonView';
 import { Folder, Lesson } from './types';
+import { LogoIcon } from './components/Icons';
 
 const App: React.FC = () => {
     const [folders, setFolders] = useState<Folder[]>(() => {
@@ -79,6 +80,7 @@ const App: React.FC = () => {
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-gray-900 text-white">
+                <LogoIcon className="w-24 h-24 text-blue-500 mb-6" />
                 <h1 className="text-5xl font-bold mb-4">CS Lesson Architect</h1>
                 <p className="text-xl text-gray-400 mb-8">Your AI-powered study partner.</p>
                 <button 

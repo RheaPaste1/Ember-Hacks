@@ -1,8 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, Lesson } from '../types';
 import { chatWithBot } from '../services/geminiService';
-import { SendIcon, SpinnerIcon } from './Icons';
+import { SendIcon, SpinnerIcon, UserIcon, SparklesIcon } from './Icons';
+import { Markdown } from './Markdown';
 
 interface ChatbotProps {
   lesson: Lesson;
@@ -61,16 +61,32 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
       <div className="p-4 border-b border-gray-700">
         <h2 className="text-lg font-semibold text-white">Lesson Assistant</h2>
       </div>
-      <div className="flex-1 p-4 overflow-y-auto space-y-4">
+      <div className="flex-1 p-4 overflow-y-auto space-y-6">
         {messages.map((msg, index) => (
-          <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`rounded-lg px-4 py-2 max-w-sm ${msg.role === 'user' ? 'bg-blue-600' : 'bg-gray-700'}`}>
-                <pre className="text-sm font-sans whitespace-pre-wrap break-words">{msg.content}</pre>
+          <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+             {msg.role === 'model' && (
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <SparklesIcon className="w-5 h-5 text-blue-400" />
+                </div>
+             )}
+            <div className={`rounded-lg px-4 py-2 max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-white'}`}>
+                {msg.role === 'model' ? 
+                  <Markdown content={msg.content} /> : 
+                  <pre className="text-sm font-sans whitespace-pre-wrap break-words">{msg.content}</pre>
+                }
             </div>
+             {msg.role === 'user' && (
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <UserIcon className="w-5 h-5 text-white" />
+                </div>
+             )}
           </div>
         ))}
         {isLoading && messages[messages.length - 1]?.role !== 'model' && (
-            <div className="flex justify-start">
+            <div className="flex justify-start items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+                    <SparklesIcon className="w-5 h-5 text-blue-400" />
+                </div>
                 <div className="bg-gray-700 rounded-lg px-4 py-2">
                     <SpinnerIcon className="w-5 h-5" />
                 </div>

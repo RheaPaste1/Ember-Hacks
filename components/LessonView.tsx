@@ -2,13 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
 import { VisualExampleDisplay } from './VisualExampleDisplay';
-import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from './Icons';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon } from './Icons';
 
 const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEvent<HTMLElement>) => void }> = ({ annotation, onClick }) => {
     return (
         <mark 
             onClick={onClick}
-            className="bg-blue-500/30 hover:bg-blue-500/50 cursor-pointer rounded px-1 py-0.5"
+            className="bg-yellow-400 text-gray-900 font-bold hover:bg-yellow-300 cursor-pointer rounded px-1 py-0.5"
         >
             {annotation.targetText}
         </mark>
@@ -89,7 +89,7 @@ const NotePopover: React.FC<{
     
     return (
         <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 flex flex-col popover-active">
-            <h5 className="text-sm font-bold text-gray-300 mb-2">Note for: <span className="font-normal italic text-blue-400">"{annotation.targetText}"</span></h5>
+            <h5 className="text-sm font-bold text-gray-300 mb-2">Note for: <span className="font-normal italic text-yellow-400">"{annotation.targetText}"</span></h5>
             <textarea
                 ref={textareaRef}
                 value={noteText}
@@ -237,13 +237,13 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                             
                             <div className="space-y-6">
                                 <div>
-                                    <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Definition</h4>
+                                    <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
                                     <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
                                         <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
                                     </div>
                                 </div>
                                 <div>
-                                    <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Notes & Edge Cases</h4>
+                                    <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
                                     <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
                                          <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
                                     </div>
@@ -251,7 +251,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                 
                                 {concept.visualExample && concept.visualExample.trim() !== '' && (
                                     <div>
-                                        <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Visual Example</h4>
+                                        <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
                                         <div className="p-4 border border-dashed border-gray-600 rounded-md bg-gray-900/50">
                                             <p className="italic text-gray-400 text-sm mb-2">Prompt: "{concept.visualExample}"</p>
                                             <VisualExampleDisplay prompt={concept.visualExample} />
@@ -261,7 +261,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
 
                                 {concept.codeExample && concept.codeExample.trim() !== '' && (
                                     <div>
-                                        <h4 className="font-bold text-gray-400 uppercase tracking-wider text-sm mb-2">Code Example</h4>
+                                        <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
                                         <div onMouseUp={handleMouseUp(concept.id, 'codeExample')} className="bg-gray-900 rounded-md p-4 select-text">
                                             <HighlightedContent text={concept.codeExample} conceptId={concept.id} fieldName="codeExample" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
                                         </div>
