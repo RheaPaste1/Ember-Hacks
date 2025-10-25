@@ -108,11 +108,11 @@ export const chatWithBot = async (
             **Current Lesson Content:**
             ---
             Topic: ${lesson.topic}
-            Concepts: ${JSON.stringify(lesson.concepts)}
-            User Notes: ${lesson.userNotes}
+            Concepts: ${JSON.stringify(lesson.concepts.map(({id, term, definition, notes, visualExample, codeExample}) => ({id, term, definition, notes, visualExample, codeExample})))}
+            Annotations: ${JSON.stringify(lesson.annotations)}
             ---
             
-            Based on the user's request, conversation history, and the lesson content, provide a helpful response. If the user asks to modify the document, provide the updated text for that section. If they ask a question, answer it clearly.`
+            Based on the user's request, conversation history, and the lesson content (including their personal annotations), provide a helpful response. If the user asks to modify the document, provide the updated text for that section. If they ask a question, answer it clearly.`
         },
         history: chatHistory,
     });

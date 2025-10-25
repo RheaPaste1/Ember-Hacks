@@ -1,4 +1,11 @@
 
+export interface Annotation {
+  id: string;
+  conceptId: string;
+  targetText: string;
+  note: string;
+}
+
 export interface Concept {
   id: string;
   term: string;
@@ -12,7 +19,7 @@ export interface Lesson {
   id: string;
   topic: string;
   concepts: Concept[];
-  userNotes: string;
+  annotations: Annotation[];
 }
 
 export interface Folder {

@@ -35,7 +35,7 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
         id: self.crypto.randomUUID(),
         topic,
         concepts,
-        userNotes: 'Add your personal notes and reflections here!'
+        annotations: [],
       };
       onLessonCreated(newLesson);
     } catch (err: any) {
