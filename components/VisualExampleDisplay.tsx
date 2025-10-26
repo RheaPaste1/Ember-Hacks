@@ -4,9 +4,10 @@ import { SpinnerIcon } from './Icons';
 
 interface VisualExampleDisplayProps {
   prompt: string;
+  onImageLoaded?: (base64Url: string) => void;
 }
 
-export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prompt }) => {
+export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prompt, onImageLoaded }) => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +21,11 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
       try {
         const base64Image = await generateVisual(prompt);
         if (!isCancelled) {
-          setImageUrl(`data:image/png;base64,${base64Image}`);
+          const fullUrl = `data:image/png;base64,${base64Image}`;
+          setImageUrl(fullUrl);
+          if (onImageLoaded) {
+            onImageLoaded(fullUrl);
+          }
         }
       } catch (e: any) {
         if (!isCancelled) {
@@ -43,7 +48,7 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
     return () => {
       isCancelled = true;
     };
-  }, [prompt]);
+  }, [prompt, onImageLoaded]);
 
   if (isLoading) {
     return (

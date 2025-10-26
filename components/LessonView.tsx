@@ -2,7 +2,127 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
 import { VisualExampleDisplay } from './VisualExampleDisplay';
-import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon } from './Icons';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon, DownloadIcon, SpinnerIcon } from './Icons';
+import { jsPDF } from 'jspdf';
+
+// Type declaration for the globally available jsPDF library
+declare global {
+    interface Window {
+        jspdf: {
+            jsPDF: typeof jsPDF;
+        };
+    }
+}
+
+const generateLessonPdf = async (lesson: Lesson, generatedImages: Record<string, string>) => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+    let y = 20;
+    const pageHeight = doc.internal.pageSize.height;
+    const margin = 20;
+    const contentWidth = doc.internal.pageSize.width - margin * 2;
+
+    const checkPageBreak = (heightNeeded: number) => {
+        if (y + heightNeeded > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+        }
+    };
+
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    const titleLines = doc.splitTextToSize(lesson.topic, contentWidth);
+    checkPageBreak(titleLines.length * 10);
+    doc.text(titleLines, margin, y);
+    y += titleLines.length * 10 + 10;
+
+    for (const [index, concept] of lesson.concepts.entries()) {
+        checkPageBreak(20);
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(60, 60, 60);
+        doc.text(`${index + 1}. ${concept.term}`, margin, y);
+        y += 10;
+        doc.setTextColor(0, 0, 0);
+
+        if (concept.definition) {
+            checkPageBreak(10);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Definition', margin, y);
+            y += 7;
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            const lines = doc.splitTextToSize(concept.definition, contentWidth);
+            checkPageBreak(lines.length * 5);
+            doc.text(lines, margin, y);
+            y += lines.length * 5 + 10;
+        }
+
+        if (concept.notes) {
+            checkPageBreak(10);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Notes & Edge Cases', margin, y);
+            y += 7;
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            const lines = doc.splitTextToSize(concept.notes, contentWidth);
+            checkPageBreak(lines.length * 5);
+            doc.text(lines, margin, y);
+            y += lines.length * 5 + 10;
+        }
+
+        if (concept.codeExample) {
+            checkPageBreak(10);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Code Example', margin, y);
+            y += 7;
+            const code = concept.codeExample.replace(/^```(?:\w*\n)?/, '').replace(/```$/, '').trim();
+            const lines = doc.splitTextToSize(code, contentWidth - 10);
+            const rectHeight = lines.length * 4 + 6;
+            checkPageBreak(rectHeight + 5);
+            doc.setFillColor(243, 244, 246);
+            doc.rect(margin, y - 4, contentWidth, rectHeight, 'F');
+            doc.setFont('courier', 'normal');
+            doc.setFontSize(10);
+            doc.text(lines, margin + 5, y);
+            y += rectHeight + 5;
+        }
+
+        const imageUrl = generatedImages[concept.id];
+        if (imageUrl) {
+            checkPageBreak(10);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Visual Example', margin, y);
+            y += 7;
+            try {
+                const imgProps = doc.getImageProperties(imageUrl);
+                const aspectRatio = imgProps.width / imgProps.height;
+                let imgWidth = contentWidth;
+                let imgHeight = imgWidth / aspectRatio;
+                const maxHeight = 120;
+                if (imgHeight > maxHeight) {
+                    imgHeight = maxHeight;
+                    imgWidth = imgHeight * aspectRatio;
+                }
+                checkPageBreak(imgHeight + 5);
+                doc.addImage(imageUrl, 'PNG', margin, y, imgWidth, imgHeight);
+                y += imgHeight + 10;
+            } catch (e) {
+                console.error("Error adding image to PDF:", e);
+                doc.setFont('helvetica', 'italic').setFontSize(10).text('Error: Could not embed visual example.', margin, y);
+                y += 10;
+            }
+        }
+        y += 10;
+    }
+
+    doc.save(`${lesson.topic.replace(/\s/g, '_')}.pdf`);
+};
 
 const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEvent<HTMLElement>) => void }> = ({ annotation, onClick }) => {
     return (
@@ -307,6 +427,24 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
     const [isChatbotOpen, setIsChatbotOpen] = useState(true);
     const [popover, setPopover] = useState<{ data: Annotation, style: React.CSSProperties, isNew: boolean } | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [title, setTitle] = useState(lesson.topic);
+    const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+    useEffect(() => {
+        setTitle(lesson.topic);
+    }, [lesson.topic]);
+
+    const handleTitleSave = () => {
+        const trimmedTitle = title.trim();
+        if (trimmedTitle && trimmedTitle !== lesson.topic) {
+            onUpdateLesson({ ...lesson, topic: trimmedTitle });
+        } else {
+            setTitle(lesson.topic);
+        }
+        setIsEditingTitle(false);
+    };
 
     const handleMouseUp = (conceptId: string, fieldName: 'definition' | 'notes' | 'codeExample') => (e: React.MouseEvent) => {
         if (popover) {
@@ -382,6 +520,22 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
         onUpdateLesson({ ...lesson, annotations: updatedAnnotations });
         setPopover(null);
     };
+
+    const handleImageLoaded = (conceptId: string, url: string) => {
+        setGeneratedImages(prev => ({ ...prev, [conceptId]: url }));
+    };
+
+    const handleDownloadPdf = async () => {
+        setIsDownloadingPdf(true);
+        try {
+            await generateLessonPdf(lesson, generatedImages);
+        } catch (error) {
+            console.error("Failed to generate PDF", error);
+            alert("Sorry, there was an error creating the PDF.");
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
     
     return (
         <div className="flex h-full overflow-hidden">
@@ -396,7 +550,46 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                 }}
             >
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-4xl font-bold mb-4 text-white tracking-tight">{lesson.topic}</h1>
+                    <div className="flex items-center gap-2 group mb-4">
+                        {isEditingTitle ? (
+                            <input
+                                type="text"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                onBlur={handleTitleSave}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleTitleSave();
+                                    if (e.key === 'Escape') {
+                                        setIsEditingTitle(false);
+                                        setTitle(lesson.topic);
+                                    }
+                                }}
+                                className="text-4xl font-bold tracking-tight bg-gray-700/50 text-white focus:outline-none w-full rounded-md px-2 py-1"
+                                autoFocus
+                            />
+                        ) : (
+                            <h1 className="text-4xl font-bold text-white tracking-tight">{lesson.topic}</h1>
+                        )}
+                        {!isEditingTitle && (
+                            <>
+                                <button
+                                    onClick={() => setIsEditingTitle(true)}
+                                    className="p-2 text-gray-400 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    aria-label="Edit lesson title"
+                                >
+                                    <PencilIcon className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={handleDownloadPdf}
+                                    disabled={isDownloadingPdf}
+                                    className="p-2 text-gray-400 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    aria-label="Download lesson as PDF"
+                                >
+                                    {isDownloadingPdf ? <SpinnerIcon className="w-5 h-5"/> : <DownloadIcon className="w-5 h-5" />}
+                                </button>
+                            </>
+                        )}
+                    </div>
 
                     {lesson.concepts.map((concept, index) => (
                         <div key={concept.id} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-lg">
@@ -419,7 +612,10 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                 {concept.visualExample && concept.visualExample.trim() !== '' && (
                                     <div>
                                         <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
-                                        <VisualExampleDisplay prompt={concept.visualExample} />
+                                        <VisualExampleDisplay 
+                                            prompt={concept.visualExample} 
+                                            onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
+                                        />
                                     </div>
                                 )}
 
