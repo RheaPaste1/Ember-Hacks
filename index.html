@@ -17,8 +17,39 @@
   }
 }
 </script>
+<style>
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out forwards;
+  }
+
+  body {
+    background-color: #111827; /* bg-gray-900 */
+    background-image: 
+      radial-gradient(
+        600px circle at var(--mouse-x),
+        rgba(59, 130, 246, 0.15), /* blue-500 */
+        transparent 80%
+      ),
+      radial-gradient(
+        800px circle at var(--mouse-y),
+        rgba(168, 85, 247, 0.1), /* purple-500 */
+        transparent 80%
+      );
+  }
+
+</style>
 </head>
-  <body class="bg-gray-900 text-white">
+  <body class="text-white overflow-x-hidden">
     <div id="root"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="module" src="/index.tsx"></script>

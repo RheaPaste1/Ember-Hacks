@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Folder, Lesson } from '../types';
 import { FolderIcon, FileIcon, PlusIcon, PencilIcon } from './Icons';
@@ -42,8 +43,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
   };
 
   return (
-    <aside className="w-72 bg-gray-800 text-gray-300 flex flex-col h-full border-r border-gray-700">
-      <div className="p-4 border-b border-gray-700">
+    <aside className="w-72 bg-gray-800/80 backdrop-blur-lg text-gray-300 flex flex-col h-full border-r border-gray-700/50">
+      <div className="p-4 border-b border-gray-700/50">
         <h1 className="text-xl font-bold text-white">CS Lesson Architect</h1>
       </div>
       <div className="p-4">
@@ -117,7 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                 </>
               )}
             </div>
-            <ul className="mt-1 pl-4 border-l border-gray-700 space-y-1">
+            <ul className="mt-1 pl-4 border-l border-gray-700/50 space-y-1">
               {folder.lessons.map(lesson => (
                 <li key={lesson.id}>
                   <a
@@ -132,10 +133,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                       e.preventDefault();
                       onSelectLesson(folder.id, lesson.id);
                     }}
-                    className={`flex items-center space-x-3 px-2 py-1.5 rounded-md text-sm transition-colors ${
+                    className={`flex items-center space-x-3 pl-2 pr-1.5 py-1.5 rounded-md text-sm transition-all duration-200 ease-in-out ${
                       lesson.id === selectedLessonId
-                        ? 'bg-blue-600 text-white'
-                        : 'hover:bg-gray-700'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                        : 'hover:bg-gray-700 hover:pl-3'
                     }`}
                   >
                     <FileIcon className="w-4 h-4 flex-shrink-0" />

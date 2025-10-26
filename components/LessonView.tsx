@@ -678,64 +678,66 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                         const definitionId = `${concept.id}-definition`;
                         const notesId = `${concept.id}-notes`;
                         return (
-                            <div key={concept.id} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-lg">
-                                <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
-                                
-                                <div className="space-y-6">
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
-                                            {concept.definition && (
-                                                <button onClick={() => playAudio(concept.definition, definitionId)} className="text-gray-400 hover:text-white transition-colors" title="Read definition aloud">
-                                                    {audioState.id === definitionId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
-                                                    {audioState.id === definitionId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
-                                                    {audioState.id !== definitionId && <SpeakerWaveIcon className="w-4 h-4" />}
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                            <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
-                                            {concept.notes && (
-                                                <button onClick={() => playAudio(concept.notes, notesId)} className="text-gray-400 hover:text-white transition-colors" title="Read notes aloud">
-                                                    {audioState.id === notesId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
-                                                    {audioState.id === notesId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
-                                                    {audioState.id !== notesId && <SpeakerWaveIcon className="w-4 h-4" />}
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                             <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
-                                        </div>
-                                    </div>
+                             <div key={concept.id} className="mb-8 p-px rounded-xl bg-gradient-to-br from-blue-500/50 via-transparent to-purple-500/50">
+                                <div className="p-6 bg-gray-800 rounded-[11px] shadow-lg">
+                                    <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
                                     
-                                    {concept.visualExample && concept.visualExample.trim() !== '' && (
+                                    <div className="space-y-6">
                                         <div>
-                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
-                                            <VisualExampleDisplay 
-                                                prompt={concept.visualExample} 
-                                                onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
-                                            />
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
+                                                {concept.definition && (
+                                                    <button onClick={() => playAudio(concept.definition, definitionId)} className="text-gray-400 hover:text-white transition-colors" title="Read definition aloud">
+                                                        {audioState.id === definitionId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                        {audioState.id === definitionId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
+                                                        {audioState.id !== definitionId && <SpeakerWaveIcon className="w-4 h-4" />}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                                <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                            </div>
                                         </div>
-                                    )}
+                                        <div>
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
+                                                {concept.notes && (
+                                                    <button onClick={() => playAudio(concept.notes, notesId)} className="text-gray-400 hover:text-white transition-colors" title="Read notes aloud">
+                                                        {audioState.id === notesId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                        {audioState.id === notesId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
+                                                        {audioState.id !== notesId && <SpeakerWaveIcon className="w-4 h-4" />}
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                                 <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                            </div>
+                                        </div>
+                                        
+                                        {concept.visualExample && concept.visualExample.trim() !== '' && (
+                                            <div>
+                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
+                                                <VisualExampleDisplay 
+                                                    prompt={concept.visualExample} 
+                                                    onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
+                                                />
+                                            </div>
+                                        )}
 
-                                    {concept.codeExample && concept.codeExample.trim() !== '' && (
-                                        <div>
-                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
-                                            <CodeSnippet
-                                                codeBlock={concept.codeExample}
-                                                conceptId={concept.id}
-                                                fieldName="codeExample"
-                                                annotations={lesson.annotations || []}
-                                                onHighlightClick={handleHighlightClick}
-                                                onMouseUp={handleMouseUp(concept.id, 'codeExample')}
-                                            />
-                                        </div>
-                                    )}
+                                        {concept.codeExample && concept.codeExample.trim() !== '' && (
+                                            <div>
+                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
+                                                <CodeSnippet
+                                                    codeBlock={concept.codeExample}
+                                                    conceptId={concept.id}
+                                                    fieldName="codeExample"
+                                                    annotations={lesson.annotations || []}
+                                                    onHighlightClick={handleHighlightClick}
+                                                    onMouseUp={handleMouseUp(concept.id, 'codeExample')}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         )
@@ -758,10 +760,10 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                 <div className={`transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isChatbotOpen ? 'w-[400px]' : 'w-0'}`}>
                     <Chatbot lesson={lesson} onUpdateLesson={onUpdateLesson} />
                 </div>
-                 <div className="flex items-center justify-center bg-gray-800 border-l border-gray-700">
+                 <div className="flex items-center justify-center bg-gray-800/80 backdrop-blur-sm border-l border-gray-700/50">
                     <button 
                         onClick={() => setIsChatbotOpen(!isChatbotOpen)}
-                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none w-10"
+                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none w-10"
                         aria-label={isChatbotOpen ? "Hide assistant" : "Show assistant"}
                         aria-expanded={isChatbotOpen}
                     >

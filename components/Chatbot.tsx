@@ -57,13 +57,13 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-800 border-l border-gray-700 w-[400px]">
-      <div className="p-4 border-b border-gray-700">
+    <div className="flex flex-col h-full bg-gray-800/80 backdrop-blur-lg border-l border-gray-700/50 w-[400px]">
+      <div className="p-4 border-b border-gray-700/50">
         <h2 className="text-lg font-semibold text-white">Lesson Assistant</h2>
       </div>
       <div className="flex-1 p-4 overflow-y-auto space-y-6">
         {messages.map((msg, index) => (
-          <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
              {msg.role === 'model' && (
                 <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
                     <SparklesIcon className="w-5 h-5 text-blue-400" />
@@ -94,7 +94,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t border-gray-700">
+      <div className="p-4 border-t border-gray-700/50">
         <div className="flex items-center space-x-2">
           <textarea
             value={input}
