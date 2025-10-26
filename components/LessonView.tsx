@@ -108,13 +108,20 @@ const CodeSnippet: React.FC<{
         return (
             <>
                 {parts.map((part, i) => {
-                    if (/^\/\/.*|\/\*[\s\S]*?\*\/$/.test(part)) return <span key={i} className="text-gray-400 italic">{part}</span>;
-                    if (/^(".*?"|'.*?'|`.*?`)$/.test(part)) return <span key={i} className="text-amber-400">{part}</span>;
-                    if (keywordTest.test(part)) return <span key={i} className="text-sky-400">{part}</span>;
-                    if (/^\w+(?=\s*\()$/.test(part) && !keywordTest.test(part)) return <span key={i} className="text-yellow-300">{part}</span>;
-                    if (/^\b\d+\.?\d*\b$/.test(part)) return <span key={i} className="text-fuchsia-400">{part}</span>;
-                    if (/^[{}()\[\].,;:]$/.test(part)) return <span key={i} className="text-gray-500">{part}</span>;
-                    return <span key={i} className="text-gray-300">{part}</span>;
+                    // Comments: Subtle, de-emphasized
+                    if (/^\/\/.*|\/\*[\s\S]*?\*\/$/.test(part)) return <span key={i} className="text-gray-500 italic">{part}</span>;
+                    // Strings: Greenish, distinct
+                    if (/^(".*?"|'.*?'|`.*?`)$/.test(part)) return <span key={i} className="text-emerald-400">{part}</span>;
+                    // Keywords: Purple/fuchsia, stands out
+                    if (keywordTest.test(part)) return <span key={i} className="text-fuchsia-400">{part}</span>;
+                    // Function names: Bright cyan
+                    if (/^\w+(?=\s*\()$/.test(part) && !keywordTest.test(part)) return <span key={i} className="text-cyan-400">{part}</span>;
+                    // Numbers: Orange, warm color
+                    if (/^\b\d+\.?\d*\b$/.test(part)) return <span key={i} className="text-orange-400">{part}</span>;
+                    // Punctuation: Neutral, visible but not distracting
+                    if (/^[{}()\[\].,;:]$/.test(part)) return <span key={i} className="text-gray-400">{part}</span>;
+                    // Default text: Soft white
+                    return <span key={i} className="text-slate-300">{part}</span>;
                 })}
             </>
         );
