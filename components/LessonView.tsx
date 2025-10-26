@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
 import { VisualExampleDisplay } from './VisualExampleDisplay';
-import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon } from './Icons';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon } from './Icons';
 
 const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEvent<HTMLElement>) => void }> = ({ annotation, onClick }) => {
     return (
@@ -18,7 +18,7 @@ const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEven
 const HighlightedContent: React.FC<{ 
     text: string, 
     conceptId: string,
-    fieldName: 'definition' | 'notes' | 'codeExample',
+    fieldName: 'definition' | 'notes', // Removed 'codeExample' as it's handled by CodeSnippet
     annotations: Annotation[],
     onHighlightClick: (annotation: Annotation, target: HTMLElement) => void 
 }> = ({ text, conceptId, fieldName, annotations, onHighlightClick }) => {
@@ -56,6 +56,122 @@ const HighlightedContent: React.FC<{
         <pre className="text-sm font-sans whitespace-pre-wrap break-words">
             {parts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>)}
         </pre>
+    );
+};
+
+const CodeSnippet: React.FC<{
+    codeBlock: string;
+    conceptId: string;
+    fieldName: 'codeExample';
+    annotations: Annotation[];
+    onHighlightClick: (annotation: Annotation, target: HTMLElement) => void;
+    onMouseUp: (e: React.MouseEvent<HTMLElement>) => void;
+}> = ({ codeBlock, conceptId, fieldName, annotations, onHighlightClick, onMouseUp }) => {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const parseCodeBlock = (block: string) => {
+        const match = block.match(/^```(\w*)\n([\s\S]*?)```$/);
+        if (match) {
+            const code = match[2].trim();
+            return { language: match[1] || 'plaintext', code };
+        }
+        const trimmedBlock = block.trim();
+        if (trimmedBlock.startsWith('```') && trimmedBlock.endsWith('```')) {
+             return { language: 'plaintext', code: trimmedBlock.slice(3, -3).trim() };
+        }
+        return { language: 'plaintext', code: block };
+    };
+
+    const { language, code } = parseCodeBlock(codeBlock);
+
+    const handleCopy = () => {
+        navigator.clipboard.writeText(code);
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+    
+    // FIX: Typed SyntaxHighlightedText as React.FC to allow 'key' prop.
+    const SyntaxHighlightedText: React.FC<{ text: string }> = ({ text }) => {
+        const tokenRegex = new RegExp(
+            `(\\b(?:public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|String|boolean|double|float|true|false|null|this)\\b)` + // Keywords
+            `|(".*?"|'.*?'|\`.*?\`)` + // Strings
+            `|(\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/)` + // Comments
+            `|(\\b\\d+\\.?\\d*\\b)` + // Numbers
+            `|(\\w+(?=\\s*\\())` + // Function names
+            `|([{}()\\[\\].,;:])` // Punctuation
+        , 'g');
+    
+        const parts = text.split(tokenRegex).filter(Boolean);
+    
+        const keywordTest = /\b(?:public|private|static|class|void|int|String|const|let|var|function|return|if|else|for|while|new|import|from|export|default|async|await|try|catch|finally|throws|extends|implements|interface|enum|true|false|null|this)\b/;
+    
+        return (
+            <>
+                {parts.map((part, i) => {
+                    if (/^\/\/.*|\/\*[\s\S]*?\*\/$/.test(part)) return <span key={i} className="text-gray-400 italic">{part}</span>;
+                    if (/^(".*?"|'.*?'|`.*?`)$/.test(part)) return <span key={i} className="text-amber-400">{part}</span>;
+                    if (keywordTest.test(part)) return <span key={i} className="text-sky-400">{part}</span>;
+                    if (/^\w+(?=\s*\()$/.test(part) && !keywordTest.test(part)) return <span key={i} className="text-yellow-300">{part}</span>;
+                    if (/^\b\d+\.?\d*\b$/.test(part)) return <span key={i} className="text-fuchsia-400">{part}</span>;
+                    if (/^[{}()\[\].,;:]$/.test(part)) return <span key={i} className="text-gray-500">{part}</span>;
+                    return <span key={i} className="text-gray-300">{part}</span>;
+                })}
+            </>
+        );
+    };
+
+    const renderContentWithHighlights = () => {
+        const relevantAnnotations = annotations
+            .filter(a => a.conceptId === conceptId && a.fieldName === fieldName)
+            .sort((a, b) => a.startIndex - b.startIndex);
+
+        if (relevantAnnotations.length === 0) {
+            return <SyntaxHighlightedText text={code} />;
+        }
+        
+        const contentParts: React.ReactNode[] = [];
+        let lastIndex = 0;
+
+        relevantAnnotations.forEach((annotation) => {
+            if (annotation.startIndex > lastIndex) {
+                const textSegment = code.substring(lastIndex, annotation.startIndex);
+                contentParts.push(<SyntaxHighlightedText key={`text-${lastIndex}`} text={textSegment} />);
+            }
+            contentParts.push(
+                <mark 
+                    key={annotation.id}
+                    onClick={(e) => onHighlightClick(annotation, e.currentTarget)}
+                    className="bg-yellow-400 text-gray-900 font-bold hover:bg-yellow-300 cursor-pointer rounded px-1 py-0.5"
+                >
+                    <SyntaxHighlightedText text={annotation.targetText} />
+                </mark>
+            );
+            lastIndex = annotation.endIndex;
+        });
+
+        if (lastIndex < code.length) {
+            const textSegment = code.substring(lastIndex);
+            contentParts.push(<SyntaxHighlightedText key={`text-${lastIndex}`} text={textSegment} />);
+        }
+
+        return contentParts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>);
+    };
+
+    return (
+        <div className="bg-gray-900 rounded-md overflow-hidden mt-2 border border-gray-700/50">
+            <div className="flex justify-between items-center px-4 py-2 bg-gray-800/50">
+                <span className="text-xs font-sans text-gray-400 uppercase">{language}</span>
+                <button onClick={handleCopy} className="text-xs flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors duration-200">
+                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-400"/> : <ClipboardIcon className="w-4 h-4"/>}
+                    {isCopied ? 'Copied!' : 'Copy'}
+                </button>
+            </div>
+            <div onMouseUp={onMouseUp} className="p-4 text-sm font-mono whitespace-pre-wrap break-words select-text overflow-x-auto">
+                <code>
+                    {renderContentWithHighlights()}
+                </code>
+            </div>
+        </div>
     );
 };
 
@@ -252,19 +368,21 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                 {concept.visualExample && concept.visualExample.trim() !== '' && (
                                     <div>
                                         <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
-                                        <div className="p-4 border border-dashed border-gray-600 rounded-md bg-gray-900/50">
-                                            <p className="italic text-gray-400 text-sm mb-2">Prompt: "{concept.visualExample}"</p>
-                                            <VisualExampleDisplay prompt={concept.visualExample} />
-                                        </div>
+                                        <VisualExampleDisplay prompt={concept.visualExample} />
                                     </div>
                                 )}
 
                                 {concept.codeExample && concept.codeExample.trim() !== '' && (
                                     <div>
                                         <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
-                                        <div onMouseUp={handleMouseUp(concept.id, 'codeExample')} className="bg-gray-900 rounded-md p-4 select-text">
-                                            <HighlightedContent text={concept.codeExample} conceptId={concept.id} fieldName="codeExample" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
-                                        </div>
+                                        <CodeSnippet
+                                            codeBlock={concept.codeExample}
+                                            conceptId={concept.id}
+                                            fieldName="codeExample"
+                                            annotations={lesson.annotations || []}
+                                            onHighlightClick={handleHighlightClick}
+                                            onMouseUp={handleMouseUp(concept.id, 'codeExample')}
+                                        />
                                     </div>
                                 )}
                             </div>

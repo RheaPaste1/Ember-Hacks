@@ -22,9 +22,9 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
         if (!isCancelled) {
           setImageUrl(`data:image/png;base64,${base64Image}`);
         }
-      } catch (e) {
+      } catch (e: any) {
         if (!isCancelled) {
-          setError('Failed to generate visual. Please try again later.');
+          setError(e.message || 'Failed to generate visual. Please try again later.');
           console.error(e);
         }
       } finally {
@@ -47,7 +47,7 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 bg-gray-900 rounded-md">
+      <div className="flex flex-col items-center justify-center h-48 bg-gray-900 rounded-md mt-2">
         <SpinnerIcon className="w-8 h-8 text-gray-500" />
         <p className="mt-2 text-sm text-gray-500">Generating diagram...</p>
       </div>
@@ -56,7 +56,7 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-48 bg-gray-900 rounded-md p-4 text-center">
+      <div className="flex items-center justify-center h-48 bg-gray-900 rounded-md p-4 text-center mt-2">
         <p className="text-sm text-red-400">{error}</p>
       </div>
     );
@@ -67,6 +67,6 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
   }
 
   return (
-    <img src={imageUrl} alt={prompt} className="mt-4 rounded-md w-full" />
+    <img src={imageUrl} alt={prompt} className="mt-2 rounded-md w-full" />
   );
 };

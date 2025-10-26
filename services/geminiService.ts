@@ -40,15 +40,30 @@ export const generateVisual = async (prompt: string): Promise<string> => {
             },
         });
         
-        for (const part of response.candidates[0].content.parts) {
+        const firstCandidate = response?.candidates?.[0];
+
+        if (!firstCandidate || !firstCandidate.content || !firstCandidate.content.parts) {
+            console.error("Unexpected response structure from generateVisual API:", response);
+            const blockReason = response?.promptFeedback?.blockReason;
+            if (blockReason) {
+                throw new Error(`Image generation was blocked. Reason: ${blockReason}`);
+            }
+            throw new Error("Could not generate visual. The response from the AI was empty or invalid.");
+        }
+
+        for (const part of firstCandidate.content.parts) {
             if (part.inlineData) {
                 return part.inlineData.data;
             }
         }
+        
         throw new Error("No image data found in response.");
 
     } catch (error) {
         console.error("Error generating visual:", error);
+        if (error instanceof Error) {
+            throw error; // Re-throw with specific message
+        }
         throw new Error("Failed to generate visual from AI.");
     }
 };
