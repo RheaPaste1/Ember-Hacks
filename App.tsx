@@ -38,19 +38,27 @@ const App: React.FC = () => {
         setCurrentView('lesson-view');
     };
 
-    const handleLessonCreated = (lesson: Lesson) => {
-        const defaultFolder = folders.find(f => f.id === 'default') || folders[0];
-        if (!defaultFolder) {
-            const newFolder = { id: 'default', name: 'My Lessons', lessons: [lesson] };
-            setFolders([newFolder]);
-        } else {
-            setFolders(folders.map(f => 
-                f.id === defaultFolder.id 
-                    ? { ...f, lessons: [...f.lessons, lesson] } 
-                    : f
-            ));
+    const handleLessonCreated = (lesson: Lesson, folderId: string) => {
+        let targetFolderId = folderId;
+        // Fallback if no folder is selected or found
+        if (!folders.some(f => f.id === targetFolderId)) {
+            targetFolderId = folders[0]?.id;
         }
-        handleSelectLesson(defaultFolder.id, lesson.id);
+
+        if (!targetFolderId) {
+             // Create a default folder if none exist
+             const newFolder = { id: 'default', name: 'My Lessons', lessons: [lesson] };
+             setFolders([newFolder]);
+             handleSelectLesson(newFolder.id, lesson.id);
+             return;
+        }
+
+        setFolders(folders.map(f =>
+            f.id === targetFolderId
+                ? { ...f, lessons: [...f.lessons, lesson] }
+                : f
+        ));
+        handleSelectLesson(targetFolderId, lesson.id);
     };
 
     const handleAddFolder = (name: string) => {
@@ -60,6 +68,33 @@ const App: React.FC = () => {
             lessons: []
         };
         setFolders([...folders, newFolder]);
+    };
+
+    const handleRenameFolder = (folderId: string, newName: string) => {
+        setFolders(folders.map(f => f.id === folderId ? { ...f, name: newName } : f));
+    };
+
+    const handleMoveLesson = (lessonId: string, sourceFolderId: string, destinationFolderId: string) => {
+        if (sourceFolderId === destinationFolderId) return;
+
+        let lessonToMove: Lesson | undefined;
+        const foldersWithoutLesson = folders.map(folder => {
+            if (folder.id === sourceFolderId) {
+                lessonToMove = folder.lessons.find(l => l.id === lessonId);
+                return { ...folder, lessons: folder.lessons.filter(l => l.id !== lessonId) };
+            }
+            return folder;
+        });
+
+        if (lessonToMove) {
+            const foldersWithLesson = foldersWithoutLesson.map(folder => {
+                if (folder.id === destinationFolderId) {
+                    return { ...folder, lessons: [...folder.lessons, lessonToMove!] };
+                }
+                return folder;
+            });
+            setFolders(foldersWithLesson);
+        }
     };
 
     const handleUpdateLesson = (updatedLesson: Lesson) => {
@@ -104,9 +139,11 @@ const App: React.FC = () => {
                 onSelectLesson={handleSelectLesson}
                 onNewLesson={handleNewLesson}
                 onAddFolder={handleAddFolder}
+                onRenameFolder={handleRenameFolder}
+                onMoveLesson={handleMoveLesson}
             />
             <div className="flex-1 bg-gray-900 overflow-hidden">
-                {currentView === 'new-lesson' && <NewLessonForm onLessonCreated={handleLessonCreated} />}
+                {currentView === 'new-lesson' && <NewLessonForm folders={folders} onLessonCreated={handleLessonCreated} />}
                 {currentView === 'lesson-view' && selectedLesson && (
                     <LessonView lesson={selectedLesson} onUpdateLesson={handleUpdateLesson} />
                 )}

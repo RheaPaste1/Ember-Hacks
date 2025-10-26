@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Concept } from '../types';
 
@@ -30,39 +31,47 @@ const fileToTextPart = async (file: File) => {
 
 export const generateVisual = async (prompt: string): Promise<string> => {
     try {
+        const enhancedPrompt = `
+            Task: Generate a technical diagram for the concept: "${prompt}".
+            
+            Style requirements:
+            - Type: 2D schematic diagram ONLY.
+            - Color: Black and white ONLY.
+            - Background: Solid white.
+            - Elements: Use only simple geometric shapes (rectangles, circles, diamonds) and lines/arrows.
+            - Text: All text MUST be legible and fit completely inside its shape. This is the most important rule.
+            
+            Content rules:
+            - DO NOT draw any real-world objects, animals, people, or fantasy creatures. The output MUST be a diagram, not an illustration or a picture.
+            - DO NOT use any textures, gradients, or shadows.
+            - For example, if the prompt is "class diagram", draw the boxes and arrows, do NOT draw a picture of a classroom.
+            - Prohibited subjects to draw: mermaids, cars, trees, people, animals, buildings. The output must be purely abstract and informational.
+        `;
+
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
             contents: {
-                parts: [{ text: prompt }],
+                parts: [{ text: enhancedPrompt }],
             },
             config: {
                 responseModalities: [Modality.IMAGE],
             },
         });
-        
-        const firstCandidate = response?.candidates?.[0];
 
-        if (!firstCandidate || !firstCandidate.content || !firstCandidate.content.parts) {
-            console.error("Unexpected response structure from generateVisual API:", response);
-            const blockReason = response?.promptFeedback?.blockReason;
-            if (blockReason) {
-                throw new Error(`Image generation was blocked. Reason: ${blockReason}`);
-            }
-            throw new Error("Could not generate visual. The response from the AI was empty or invalid.");
+        const firstCandidate = response.candidates?.[0];
+        const firstPart = firstCandidate?.content?.parts?.[0];
+
+        if (firstPart?.inlineData?.data) {
+            return firstPart.inlineData.data;
         }
 
-        for (const part of firstCandidate.content.parts) {
-            if (part.inlineData) {
-                return part.inlineData.data;
-            }
-        }
-        
-        throw new Error("No image data found in response.");
+        console.error("Unexpected response structure from generateVisual API:", response);
+        throw new Error("Could not generate visual. The response from the AI was empty or invalid.");
 
     } catch (error) {
         console.error("Error generating visual:", error);
         if (error instanceof Error) {
-            throw error; // Re-throw with specific message
+            throw new Error(`Failed to generate visual from AI: ${error.message}`);
         }
         throw new Error("Failed to generate visual from AI.");
     }

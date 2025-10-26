@@ -15,6 +15,84 @@ const parseInline = (text: string): React.ReactNode[] => {
     }).filter(Boolean); // Filter out empty strings from split
 };
 
+const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
+    const tokenDefinitions = [
+        // Each regex must have ONE capturing group for the content.
+        { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic' },
+        { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-300' },
+        { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-400' },
+        { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-400' },
+        { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-400' },
+        { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-400' },
+        { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-400' },
+        { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-300' },
+    ];
+    
+    // Combine all regexes into one for matching.
+    const masterRegex = new RegExp(tokenDefinitions.map(t => t.regex.source).join('|'), 'g');
+    
+    const finalElements: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    
+    while ((match = masterRegex.exec(text)) !== null) {
+        // Unmatched text before the current match
+        if (match.index > lastIndex) {
+            finalElements.push(
+                <span key={`text-${lastIndex}`} className="text-slate-300">
+                    {text.substring(lastIndex, match.index)}
+                </span>
+            );
+        }
+
+        let groupOffset = 1;
+        let found = false;
+        for (const tokenDef of tokenDefinitions) {
+            const numGroupsInRegex = (new RegExp(tokenDef.regex.source + '|')).exec('')!.length - 1;
+            if (match[groupOffset] !== undefined) {
+                let className = tokenDef.className;
+                 // Heuristic for constructor calls: `new MyClass()`
+                 if (tokenDef.type === 'function' && /^[A-Z]/.test(match[0])) {
+                    const precedingText = text.substring(0, match.index).trim();
+                    if (precedingText.endsWith('new')) {
+                        className = 'text-sky-400';
+                    }
+                 }
+                finalElements.push(
+                    <span key={`token-${match.index}`} className={className}>
+                        {match[0]}
+                    </span>
+                );
+                found = true;
+                break;
+            }
+            groupOffset += numGroupsInRegex;
+        }
+
+        if(!found) {
+            // Fallback for the whole match if no group was identified
+            finalElements.push(
+                <span key={`text-${lastIndex}`} className="text-slate-300">
+                    {match[0]}
+                </span>
+            );
+        }
+
+        lastIndex = masterRegex.lastIndex;
+    }
+    
+    // Remaining text
+    if (lastIndex < text.length) {
+        finalElements.push(
+            <span key={`text-${lastIndex}`} className="text-slate-300">
+                {text.substring(lastIndex)}
+            </span>
+        );
+    }
+    
+    return <>{finalElements.map((el, i) => <React.Fragment key={i}>{el}</React.Fragment>)}</>;
+};
+
 export const Markdown: React.FC<{ content: string }> = ({ content }) => {
     // 1. Split by code blocks first to preserve them
     const blocks = content.split(/(```[\s\S]*?```)/g);
@@ -33,7 +111,7 @@ export const Markdown: React.FC<{ content: string }> = ({ content }) => {
                     return (
                         <div key={index} className="bg-gray-900/80 rounded-lg my-2 text-white overflow-hidden">
                             {lang && <div className="text-xs text-gray-400 px-4 py-2 bg-gray-900/50">{lang}</div>}
-                            <pre className="p-4 text-sm overflow-x-auto"><code>{code}</code></pre>
+                            <pre className="p-4 text-sm overflow-x-auto font-mono"><code><SyntaxHighlightedCode text={code} /></code></pre>
                         </div>
                     );
                 }

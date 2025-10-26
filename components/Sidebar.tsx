@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Folder, Lesson } from '../types';
-import { FolderIcon, FileIcon, PlusIcon } from './Icons';
+import { FolderIcon, FileIcon, PlusIcon, PencilIcon } from './Icons';
 
 interface SidebarProps {
   folders: Folder[];
@@ -9,11 +9,17 @@ interface SidebarProps {
   onSelectLesson: (folderId: string, lessonId: string) => void;
   onNewLesson: () => void;
   onAddFolder: (name: string) => void;
+  onRenameFolder: (folderId: string, newName: string) => void;
+  onMoveLesson: (lessonId: string, sourceFolderId: string, destinationFolderId: string) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onSelectLesson, onNewLesson, onAddFolder }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onSelectLesson, onNewLesson, onAddFolder, onRenameFolder, onMoveLesson }) => {
   const [newFolderName, setNewFolderName] = useState('');
   const [showInput, setShowInput] = useState(false);
+
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState('');
+  const [draggedOverFolderId, setDraggedOverFolderId] = useState<string | null>(null);
 
   const handleAddFolder = () => {
     if (newFolderName.trim()) {
@@ -21,6 +27,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
       setNewFolderName('');
       setShowInput(false);
     }
+  };
+
+  const handleStartEdit = (folder: Folder) => {
+    setEditingFolderId(folder.id);
+    setEditingFolderName(folder.name);
+  };
+
+  const handleSaveEdit = () => {
+      if (editingFolderId && editingFolderName.trim()) {
+          onRenameFolder(editingFolderId, editingFolderName.trim());
+      }
+      setEditingFolderId(null);
   };
 
   return (
@@ -52,24 +70,64 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                     value={newFolderName}
                     onChange={(e) => setNewFolderName(e.target.value)}
                     placeholder="New folder name"
+                    autoFocus
                     className="flex-1 bg-gray-700 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddFolder()}
+                    onBlur={() => setShowInput(false)}
                 />
                 <button onClick={handleAddFolder} className="px-2 py-1 text-sm bg-blue-600 rounded hover:bg-blue-700">Add</button>
             </div>
         )}
 
         {folders.map(folder => (
-          <div key={folder.id}>
-            <div className="flex items-center space-x-2 text-gray-400">
-              <FolderIcon className="w-5 h-5" />
-              <span className="font-semibold text-sm">{folder.name}</span>
+          <div 
+            key={folder.id}
+            onDragOver={(e) => { e.preventDefault(); setDraggedOverFolderId(folder.id); }}
+            onDragEnter={() => setDraggedOverFolderId(folder.id)}
+            onDragLeave={() => setDraggedOverFolderId(null)}
+            onDrop={(e) => {
+                e.preventDefault();
+                setDraggedOverFolderId(null);
+                const lessonId = e.dataTransfer.getData('lessonId');
+                const sourceFolderId = e.dataTransfer.getData('sourceFolderId');
+                if (lessonId && sourceFolderId) {
+                    onMoveLesson(lessonId, sourceFolderId, folder.id);
+                }
+            }}
+            className={`rounded-md transition-colors ${draggedOverFolderId === folder.id ? 'bg-gray-700' : ''}`}
+          >
+            <div className="flex items-center space-x-2 text-gray-400 p-1 group">
+              <FolderIcon className="w-5 h-5 flex-shrink-0" />
+              {editingFolderId === folder.id ? (
+                <input
+                    type="text"
+                    value={editingFolderName}
+                    onChange={(e) => setEditingFolderName(e.target.value)}
+                    onBlur={handleSaveEdit}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
+                    autoFocus
+                    className="flex-1 bg-gray-900 text-sm rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : (
+                <>
+                  <span className="font-semibold text-sm flex-1 truncate">{folder.name}</span>
+                  <button onClick={() => handleStartEdit(folder)} className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white rounded-full focus:opacity-100">
+                      <PencilIcon className="w-4 h-4" />
+                  </button>
+                </>
+              )}
             </div>
-            <ul className="mt-2 pl-4 border-l border-gray-700 space-y-1">
+            <ul className="mt-1 pl-4 border-l border-gray-700 space-y-1">
               {folder.lessons.map(lesson => (
                 <li key={lesson.id}>
                   <a
                     href="#"
+                    draggable="true"
+                    onDragStart={(e) => {
+                        e.dataTransfer.setData('lessonId', lesson.id);
+                        e.dataTransfer.setData('sourceFolderId', folder.id);
+                        e.dataTransfer.effectAllowed = 'move';
+                    }}
                     onClick={(e) => {
                       e.preventDefault();
                       onSelectLesson(folder.id, lesson.id);

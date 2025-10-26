@@ -90,41 +90,85 @@ const CodeSnippet: React.FC<{
         setTimeout(() => setIsCopied(false), 2000);
     };
     
-    // FIX: Typed SyntaxHighlightedText as React.FC to allow 'key' prop.
     const SyntaxHighlightedText: React.FC<{ text: string }> = ({ text }) => {
-        const tokenRegex = new RegExp(
-            `(\\b(?:public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|String|boolean|double|float|true|false|null|this)\\b)` + // Keywords
-            `|(".*?"|'.*?'|\`.*?\`)` + // Strings
-            `|(\\/\\/.*|\\/\\*[\\s\\S]*?\\*\\/)` + // Comments
-            `|(\\b\\d+\\.?\\d*\\b)` + // Numbers
-            `|(\\w+(?=\\s*\\())` + // Function names
-            `|([{}()\\[\\].,;:])` // Punctuation
-        , 'g');
+        // Define token types with regex and CSS classes in order of precedence.
+        const tokenDefinitions = [
+            // Each regex must have ONE capturing group for the content.
+            { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic' },
+            { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-300' },
+            { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-400' },
+            { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-400' },
+            { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-400' },
+            { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-400' },
+            { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-400' },
+            { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-300' },
+        ];
+        
+        // Combine all regexes into one for matching.
+        const masterRegex = new RegExp(tokenDefinitions.map(t => t.regex.source).join('|'), 'g');
+        
+        const finalElements: React.ReactNode[] = [];
+        let lastIndex = 0;
+        let match;
+        
+        while ((match = masterRegex.exec(text)) !== null) {
+            // Unmatched text before the current match
+            if (match.index > lastIndex) {
+                finalElements.push(
+                    <span key={`text-${lastIndex}`} className="text-slate-300">
+                        {text.substring(lastIndex, match.index)}
+                    </span>
+                );
+            }
     
-        const parts = text.split(tokenRegex).filter(Boolean);
+            let groupOffset = 1;
+            let found = false;
+            for (const tokenDef of tokenDefinitions) {
+                const numGroupsInRegex = (new RegExp(tokenDef.regex.source + '|')).exec('')!.length - 1;
+                if (match[groupOffset] !== undefined) {
+                    let className = tokenDef.className;
+                     // Heuristic for constructor calls: `new MyClass()`
+                     // `MyClass` matches both 'function' and 'className'. Since `function` is first, it wins.
+                     // We need to correct it to 'className' style if it's preceded by 'new'.
+                     if (tokenDef.type === 'function' && /^[A-Z]/.test(match[0])) {
+                        const precedingText = text.substring(0, match.index).trim();
+                        if (precedingText.endsWith('new')) {
+                            className = 'text-sky-400';
+                        }
+                     }
+                    finalElements.push(
+                        <span key={`token-${match.index}`} className={className}>
+                            {match[0]}
+                        </span>
+                    );
+                    found = true;
+                    break;
+                }
+                groupOffset += numGroupsInRegex;
+            }
     
-        const keywordTest = /\b(?:public|private|static|class|void|int|String|const|let|var|function|return|if|else|for|while|new|import|from|export|default|async|await|try|catch|finally|throws|extends|implements|interface|enum|true|false|null|this)\b/;
+            if(!found) {
+                // Fallback for the whole match if no group was identified
+                finalElements.push(
+                    <span key={`text-${lastIndex}`} className="text-slate-300">
+                        {match[0]}
+                    </span>
+                );
+            }
     
-        return (
-            <>
-                {parts.map((part, i) => {
-                    // Comments: Subtle, de-emphasized
-                    if (/^\/\/.*|\/\*[\s\S]*?\*\/$/.test(part)) return <span key={i} className="text-gray-500 italic">{part}</span>;
-                    // Strings: Greenish, distinct
-                    if (/^(".*?"|'.*?'|`.*?`)$/.test(part)) return <span key={i} className="text-emerald-400">{part}</span>;
-                    // Keywords: Purple/fuchsia, stands out
-                    if (keywordTest.test(part)) return <span key={i} className="text-fuchsia-400">{part}</span>;
-                    // Function names: Bright cyan
-                    if (/^\w+(?=\s*\()$/.test(part) && !keywordTest.test(part)) return <span key={i} className="text-cyan-400">{part}</span>;
-                    // Numbers: Orange, warm color
-                    if (/^\b\d+\.?\d*\b$/.test(part)) return <span key={i} className="text-orange-400">{part}</span>;
-                    // Punctuation: Neutral, visible but not distracting
-                    if (/^[{}()\[\].,;:]$/.test(part)) return <span key={i} className="text-gray-400">{part}</span>;
-                    // Default text: Soft white
-                    return <span key={i} className="text-slate-300">{part}</span>;
-                })}
-            </>
-        );
+            lastIndex = masterRegex.lastIndex;
+        }
+        
+        // Remaining text
+        if (lastIndex < text.length) {
+            finalElements.push(
+                <span key={`text-${lastIndex}`} className="text-slate-300">
+                    {text.substring(lastIndex)}
+                </span>
+            );
+        }
+        
+        return <>{finalElements.map((el, i) => <React.Fragment key={i}>{el}</React.Fragment>)}</>;
     };
 
     const renderContentWithHighlights = () => {

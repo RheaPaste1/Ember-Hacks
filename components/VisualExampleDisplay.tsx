@@ -49,7 +49,7 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
     return (
       <div className="flex flex-col items-center justify-center h-48 bg-gray-900 rounded-md mt-2">
         <SpinnerIcon className="w-8 h-8 text-gray-500" />
-        <p className="mt-2 text-sm text-gray-500">Generating diagram...</p>
+        <p className="mt-2 text-sm text-gray-500">Generating high-quality diagram...</p>
       </div>
     );
   }
@@ -67,6 +67,6 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
   }
 
   return (
-    <img src={imageUrl} alt={prompt} className="mt-2 rounded-md w-full" />
+    <img src={imageUrl} alt={prompt} className="mt-2 rounded-md w-full border border-gray-700 shadow-lg" />
   );
 };

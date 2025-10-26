@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateLesson } from '../services/geminiService';
-import { Lesson, Concept } from '../types';
-import { SpinnerIcon, PlusIcon, CodeIcon, ImageIcon, TextFileIcon } from './Icons';
+import { Lesson, Concept, Folder } from '../types';
+import { SpinnerIcon, PlusIcon, CodeIcon, ImageIcon, TextFileIcon, XIcon } from './Icons';
 
 interface NewLessonFormProps {
-  onLessonCreated: (lesson: Lesson) => void;
+  folders: Folder[];
+  onLessonCreated: (lesson: Lesson, folderId: string) => void;
 }
 
 const getFileIcon = (file: File) => {
@@ -17,17 +18,32 @@ const getFileIcon = (file: File) => {
     return <TextFileIcon className="w-5 h-5 text-gray-400 flex-shrink-0" />;
 }
 
-export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated }) => {
+export const NewLessonForm: React.FC<NewLessonFormProps> = ({ folders, onLessonCreated }) => {
   const [topic, setTopic] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [lessonNotes, setLessonNotes] = useState('');
+  const [selectedFolderId, setSelectedFolderId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(Date.now()); // Key to reset file input
+
+  useEffect(() => {
+    if (folders.length > 0) {
+        setSelectedFolderId(folders[0].id);
+    }
+  }, [folders]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
+    if (event.target.files && event.target.files.length > 0) {
       setFiles(prev => [...prev, ...Array.from(event.target.files!)]);
+      // Reset the input by changing its key, forcing a re-mount.
+      // This is a more robust React-idiomatic way than setting event.target.value = ''.
+      setFileInputKey(Date.now());
     }
+  };
+  
+  const handleRemoveFile = (indexToRemove: number) => {
+    setFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -35,6 +51,10 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
     if (!topic || files.length === 0) {
       setError('Please provide a topic and at least one file.');
       return;
+    }
+    if (!selectedFolderId) {
+        setError('Please select a folder.');
+        return;
     }
     setIsLoading(true);
     setError(null);
@@ -47,7 +67,7 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
         concepts,
         annotations: [],
       };
-      onLessonCreated(newLesson);
+      onLessonCreated(newLesson, selectedFolderId);
     } catch (err: any) {
       setError(err.message || 'An unknown error occurred.');
     } finally {
@@ -78,6 +98,21 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
                     </div>
 
                     <div>
+                        <label htmlFor="folder" className="block text-sm font-medium text-gray-300 mb-2">Save to Folder</label>
+                        <select
+                            id="folder"
+                            value={selectedFolderId}
+                            onChange={(e) => setSelectedFolderId(e.target.value)}
+                            className="w-full px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={folders.length === 0}
+                        >
+                            {folders.map(folder => (
+                                <option key={folder.id} value={folder.id}>{folder.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
                         <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-2">Lesson Instructions (Optional)</label>
                         <textarea
                             id="notes"
@@ -99,7 +134,7 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
                                 <div className="flex text-sm text-gray-400">
                                     <label htmlFor="file-upload" className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-blue-400 hover:text-blue-500 focus-within:outline-none">
                                         <span>Upload files</span>
-                                        <input id="file-upload" name="file-upload" type="file" className="sr-only" multiple onChange={handleFileChange} />
+                                        <input key={fileInputKey} id="file-upload" name="file-upload" type="file" className="sr-only" multiple onChange={handleFileChange} />
                                     </label>
                                     <p className="pl-1">or drag and drop</p>
                                 </div>
@@ -113,9 +148,19 @@ export const NewLessonForm: React.FC<NewLessonFormProps> = ({ onLessonCreated })
                             <h3 className="text-sm font-medium text-gray-300">Selected files:</h3>
                             <ul className="mt-2 space-y-2 text-sm text-gray-400 max-h-40 overflow-y-auto border border-gray-700 rounded p-3 bg-gray-900">
                                 {files.map((file, i) => (
-                                    <li key={i} className="flex items-center space-x-2">
-                                        {getFileIcon(file)}
-                                        <span className="truncate">{file.name}</span>
+                                    <li key={`${file.name}-${i}`} className="flex items-center justify-between space-x-2">
+                                        <div className="flex items-center space-x-2 truncate">
+                                            {getFileIcon(file)}
+                                            <span className="truncate">{file.name}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveFile(i)}
+                                            className="p-1 text-gray-400 hover:text-red-400 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-red-500"
+                                            aria-label={`Remove ${file.name}`}
+                                        >
+                                            <XIcon className="w-4 h-4" />
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
