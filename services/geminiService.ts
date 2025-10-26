@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { Concept } from '../types';
 
@@ -141,6 +140,34 @@ export const generateLesson = async (topic: string, files: File[], notes: string
     } catch (error) {
         console.error("Error generating lesson:", error);
         throw new Error("Failed to generate lesson from AI. Please check the console for details.");
+    }
+};
+
+export const generateSpeech = async (text: string): Promise<string> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text: text }] }],
+            config: {
+                responseModalities: [Modality.AUDIO],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName: 'Kore' },
+                    },
+                },
+            },
+        });
+        const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!audioData) {
+            throw new Error("No audio data returned from API.");
+        }
+        return audioData;
+    } catch (error) {
+        console.error("Error generating speech:", error);
+        if (error instanceof Error) {
+            throw new Error(`Failed to generate speech from AI: ${error.message}`);
+        }
+        throw new Error("Failed to generate speech from AI.");
     }
 };
 

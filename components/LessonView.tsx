@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
 import { VisualExampleDisplay } from './VisualExampleDisplay';
-import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon, DownloadIcon, SpinnerIcon } from './Icons';
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon, DownloadIcon, SpinnerIcon, SpeakerWaveIcon, StopIcon } from './Icons';
 import { jsPDF } from 'jspdf';
+import { generateSpeech } from '../services/geminiService';
+
 
 // Type declaration for the globally available jsPDF library
 declare global {
@@ -11,6 +13,7 @@ declare global {
         jspdf: {
             jsPDF: typeof jsPDF;
         };
+        webkitAudioContext: typeof AudioContext
     }
 }
 
@@ -123,6 +126,37 @@ const generateLessonPdf = async (lesson: Lesson, generatedImages: Record<string,
 
     doc.save(`${lesson.topic.replace(/\s/g, '_')}.pdf`);
 };
+
+// Audio decoding functions based on Gemini documentation
+function decode(base64: string) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function decodeAudioData(
+  data: Uint8Array,
+  ctx: AudioContext,
+  sampleRate: number,
+  numChannels: number,
+): Promise<AudioBuffer> {
+  const dataInt16 = new Int16Array(data.buffer);
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
+  }
+  return buffer;
+}
+
 
 const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEvent<HTMLElement>) => void }> = ({ annotation, onClick }) => {
     return (
@@ -431,6 +465,17 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
     const [title, setTitle] = useState(lesson.topic);
     const [generatedImages, setGeneratedImages] = useState<Record<string, string>>({});
     const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+    const [audioState, setAudioState] = useState<{ id: string, status: 'loading' | 'playing' }>({ id: '', status: 'loading' });
+
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const currentAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+    useEffect(() => {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        return () => {
+            audioContextRef.current?.close();
+        }
+    }, []);
 
     useEffect(() => {
         setTitle(lesson.topic);
@@ -444,6 +489,44 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
             setTitle(lesson.topic);
         }
         setIsEditingTitle(false);
+    };
+
+    const playAudio = async (text: string, id: string) => {
+        if (currentAudioSourceRef.current) {
+            currentAudioSourceRef.current.stop();
+            currentAudioSourceRef.current = null;
+        }
+
+        if (audioState.id === id && audioState.status === 'playing') {
+            setAudioState({ id: '', status: 'loading' }); // Stop playing
+            return;
+        }
+
+        setAudioState({ id, status: 'loading' });
+
+        try {
+            const base64Audio = await generateSpeech(text);
+            const audioData = decode(base64Audio);
+            const audioBuffer = await decodeAudioData(audioData, audioContextRef.current!, 24000, 1);
+
+            const source = audioContextRef.current!.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContextRef.current!.destination);
+            source.start();
+
+            currentAudioSourceRef.current = source;
+            setAudioState({ id, status: 'playing' });
+
+            source.onended = () => {
+                setAudioState({ id: '', status: 'loading' });
+                currentAudioSourceRef.current = null;
+            };
+
+        } catch (error) {
+            console.error("Error playing audio:", error);
+            setAudioState({ id: '', status: 'loading' });
+            alert("Sorry, there was an error generating the audio.");
+        }
     };
 
     const handleMouseUp = (conceptId: string, fieldName: 'definition' | 'notes' | 'codeExample') => (e: React.MouseEvent) => {
@@ -591,50 +674,72 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                         )}
                     </div>
 
-                    {lesson.concepts.map((concept, index) => (
-                        <div key={concept.id} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-lg">
-                            <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
-                            
-                            <div className="space-y-6">
-                                <div>
-                                    <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
-                                    <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                        <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
-                                    <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                         <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
-                                    </div>
-                                </div>
+                    {lesson.concepts.map((concept, index) => {
+                        const definitionId = `${concept.id}-definition`;
+                        const notesId = `${concept.id}-notes`;
+                        return (
+                            <div key={concept.id} className="mb-8 p-6 bg-gray-800 rounded-lg shadow-lg">
+                                <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
                                 
-                                {concept.visualExample && concept.visualExample.trim() !== '' && (
+                                <div className="space-y-6">
                                     <div>
-                                        <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
-                                        <VisualExampleDisplay 
-                                            prompt={concept.visualExample} 
-                                            onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
-                                        />
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
+                                            {concept.definition && (
+                                                <button onClick={() => playAudio(concept.definition, definitionId)} className="text-gray-400 hover:text-white transition-colors" title="Read definition aloud">
+                                                    {audioState.id === definitionId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                    {audioState.id === definitionId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
+                                                    {audioState.id !== definitionId && <SpeakerWaveIcon className="w-4 h-4" />}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                            <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                        </div>
                                     </div>
-                                )}
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
+                                            {concept.notes && (
+                                                <button onClick={() => playAudio(concept.notes, notesId)} className="text-gray-400 hover:text-white transition-colors" title="Read notes aloud">
+                                                    {audioState.id === notesId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                    {audioState.id === notesId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
+                                                    {audioState.id !== notesId && <SpeakerWaveIcon className="w-4 h-4" />}
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
+                                             <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                        </div>
+                                    </div>
+                                    
+                                    {concept.visualExample && concept.visualExample.trim() !== '' && (
+                                        <div>
+                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
+                                            <VisualExampleDisplay 
+                                                prompt={concept.visualExample} 
+                                                onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
+                                            />
+                                        </div>
+                                    )}
 
-                                {concept.codeExample && concept.codeExample.trim() !== '' && (
-                                    <div>
-                                        <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
-                                        <CodeSnippet
-                                            codeBlock={concept.codeExample}
-                                            conceptId={concept.id}
-                                            fieldName="codeExample"
-                                            annotations={lesson.annotations || []}
-                                            onHighlightClick={handleHighlightClick}
-                                            onMouseUp={handleMouseUp(concept.id, 'codeExample')}
-                                        />
-                                    </div>
-                                )}
+                                    {concept.codeExample && concept.codeExample.trim() !== '' && (
+                                        <div>
+                                            <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
+                                            <CodeSnippet
+                                                codeBlock={concept.codeExample}
+                                                conceptId={concept.id}
+                                                fieldName="codeExample"
+                                                annotations={lesson.annotations || []}
+                                                onHighlightClick={handleHighlightClick}
+                                                onMouseUp={handleMouseUp(concept.id, 'codeExample')}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        )
+                    })}
                 </div>
             </main>
             
