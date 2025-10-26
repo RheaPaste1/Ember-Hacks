@@ -52,17 +52,17 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-48 bg-gray-900 rounded-md mt-2">
-        <SpinnerIcon className="w-8 h-8 text-gray-500" />
-        <p className="mt-2 text-sm text-gray-500">Generating high-quality diagram...</p>
+      <div className="flex flex-col items-center justify-center h-48 bg-gray-100 rounded-md mt-2 dark:bg-gray-900">
+        <SpinnerIcon className="w-8 h-8 text-gray-600 dark:text-gray-500" />
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-500">Generating high-quality diagram...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-48 bg-gray-900 rounded-md p-4 text-center mt-2">
-        <p className="text-sm text-red-400">{error}</p>
+      <div className="flex items-center justify-center h-48 bg-gray-100 rounded-md p-4 text-center mt-2 dark:bg-gray-900">
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -72,6 +72,6 @@ export const VisualExampleDisplay: React.FC<VisualExampleDisplayProps> = ({ prom
   }
 
   return (
-    <img src={imageUrl} alt={prompt} className="mt-2 rounded-md w-full border border-gray-700 shadow-lg" />
+    <img src={imageUrl} alt={prompt} className="mt-2 rounded-md w-full border border-gray-300 dark:border-gray-700 shadow-lg" />
   );
 };

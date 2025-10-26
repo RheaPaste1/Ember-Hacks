@@ -32,24 +32,135 @@
     animation: fade-in-up 0.5s ease-out forwards;
   }
 
+  /* Default body styles (for light theme) - background will be set by App.tsx */
   body {
-    background-color: #111827; /* bg-gray-900 */
-    background-image: 
-      radial-gradient(
-        600px circle at var(--mouse-x),
-        rgba(59, 130, 246, 0.15), /* blue-500 */
-        transparent 80%
-      ),
-      radial-gradient(
-        800px circle at var(--mouse-y),
-        rgba(168, 85, 247, 0.1), /* purple-500 */
-        transparent 80%
-      );
+    overflow-x: hidden;
   }
 
+  /* Dark Theme base styles - applied when html has 'dark' class */
+  html.dark {
+    background-color: #111827; /* Tailwind gray-900 */
+    color: #e5e7eb; /* Tailwind gray-200 */
+  }
+  html.dark body {
+    background-color: #111827; /* Ensure body matches html background */
+    background-image: radial-gradient(at 20% 80%, rgba(139, 92, 246, 0.2), transparent),
+                      radial-gradient(at 80% 20%, rgba(37, 99, 235, 0.2), transparent);
+  }
+
+  /* Accessibility Theme Overrides */
+  html.theme-accessibility {
+    background-color: black !important;
+  }
+
+  html.theme-accessibility body {
+    background-color: black !important;
+    color: #CCFFCC !important; /* Light green for main text */
+    background-image: none !important; /* Override radial gradients */
+  }
+
+  html.theme-accessibility .bg-gray-900,
+  html.theme-accessibility .bg-gray-900\/50 { /* Main app background */
+      background-color: #111 !important;
+  }
+
+  html.theme-accessibility .bg-gray-800\/80,
+  html.theme-accessibility .bg-gray-800 { /* Sidebar, chatbot bg */
+      background-color: #222 !important;
+      border-color: #555 !important;
+  }
+  html.theme-accessibility .border-gray-700\/50,
+  html.theme-accessibility .border-gray-700,
+  html.theme-accessibility .border-gray-600\/50,
+  html.theme-accessibility .border-gray-600 {
+      border-color: #555 !important; /* More visible borders */
+  }
+
+  html.theme-accessibility .text-white {
+      color: #CCFFCC !important;
+  }
+
+  html.theme-accessibility .text-gray-300,
+  html.theme-accessibility .text-gray-400,
+  html.theme-accessibility .text-gray-500 {
+      color: #99EE99 !important; /* Lighter green for secondary text */
+  }
+
+  html.theme-accessibility .bg-blue-600,
+  html.theme-accessibility .hover\:bg-blue-700 { /* Primary buttons, user chat bubble */
+      background-color: #FFFF00 !important; /* Bright yellow */
+      color: black !important;
+  }
+  html.theme-accessibility .bg-blue-600 .text-white {
+      color: black !important; /* Ensure text on yellow buttons is black */
+  }
+  html.theme-accessibility .bg-blue-600.disabled\:bg-gray-600 {
+      background-color: #888 !important;
+      color: black !important;
+  }
+
+  html.theme-accessibility .text-blue-400,
+  html.theme-accessibility .text-blue-500 { /* Headings, links, focus rings */
+      color: #00FFFF !important; /* Cyan */
+  }
+
+  html.theme-accessibility .bg-gray-700 { /* Model chat bubble, inputs */
+      background-color: #333 !important;
+      color: #CCFFCC !important;
+      border-color: #666 !important;
+  }
+  html.theme-accessibility .bg-gray-700 .text-sm {
+    color: #CCFFCC !important;
+  }
+
+
+  /* Code Snippets and Markdown code blocks - maintain monospace, adjust colors for contrast */
+  html.theme-accessibility .font-mono {
+      font-family: monospace !important;
+      background-color: #000 !important;
+      color: #CCFFCC !important;
+  }
+  html.theme-accessibility pre,
+  html.theme-accessibility code {
+      background-color: #000 !important;
+      color: #CCFFCC !important;
+  }
+  html.theme-accessibility .text-fuchsia-400 { color: #FF00FF !important; } /* Magenta */
+  html.theme-accessibility .text-cyan-400 { color: #00FFFF !important; }   /* Cyan */
+  html.theme-accessibility .text-yellow-300 { color: #FFFF00 !important; } /* Yellow */
+  html.theme-accessibility .text-sky-400 { color: #00CCFF !important; }    /* Light blue */
+  html.theme-accessibility .text-orange-400 { color: #FF8000 !important; } /* Orange */
+  html.theme-accessibility .text-gray-500.italic { color: #888888 !important; } /* Comments */
+  html.theme-accessibility .bg-black\/20 {
+      background-color: rgba(0, 0, 0, 0.4) !important; /* Darker background for inline code */
+  }
+
+  /* Text-to-Speech Highlight */
+  html.theme-accessibility .bg-blue-900\/20 {
+      background-color: rgba(0, 255, 255, 0.2) !important; /* Cyan transparent */
+  }
+  html.theme-accessibility .border-blue-500 {
+      border-color: #00FFFF !important; /* Cyan border */
+  }
+
+  /* Annotation Highlight */
+  html.theme-accessibility .bg-yellow-400 {
+      background-color: #FF00FF !important; /* Magenta */
+      color: black !important;
+  }
+
+  /* Popover */
+  html.theme-accessibility .bg-gray-800.border.border-gray-700.rounded-lg.shadow-2xl.p-4 {
+      background-color: #222 !important;
+      border-color: #555 !important;
+  }
+  html.theme-accessibility .bg-gray-900.border.border-gray-600 {
+      background-color: #111 !important;
+      border-color: #444 !important;
+  }
 </style>
 </head>
-  <body class="text-white overflow-x-hidden">
+  <body class="overflow-x-hidden">
     <div id="root"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="module" src="/index.tsx"></script>

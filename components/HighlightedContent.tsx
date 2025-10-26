@@ -20,14 +20,18 @@ const HighlightedContent: React.FC<{
     onHighlightClick: (annotation: Annotation, target: HTMLElement) => void,
     isSpeaking: boolean,
     onMouseUp: (e: React.MouseEvent<HTMLElement>) => void; // Added onMouseUp prop
-}> = ({ text, conceptId, fieldName, annotations, onHighlightClick, isSpeaking, onMouseUp }) => { // Added onMouseUp to destructuring
+    selectedFontFamily: string; // Add selectedFontFamily prop
+}> = ({ text, conceptId, fieldName, annotations, onHighlightClick, isSpeaking, onMouseUp, selectedFontFamily }) => { // Added onMouseUp to destructuring
 
     const relevantAnnotations = annotations
         .filter(a => a.conceptId === conceptId && a.fieldName === fieldName)
         .sort((a, b) => a.startIndex - b.startIndex);
 
+    const fontFamilyClass = selectedFontFamily === 'serif' ? 'font-serif' : 'font-sans';
+
+
     if (!text || relevantAnnotations.length === 0) {
-        return <pre onMouseUp={onMouseUp} className={`text-sm font-sans whitespace-pre-wrap break-words p-2 rounded-md transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-900/20 border-l-4 border-blue-500' : ''}`}>{text}</pre>;
+        return <pre onMouseUp={onMouseUp} className={`whitespace-pre-wrap break-words p-2 rounded-md transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-200/50 border-l-4 border-blue-500 dark:bg-blue-900/20' : ''} ${fontFamilyClass}`}>{text}</pre>;
     }
     
     const parts: React.ReactNode[] = [];
@@ -52,7 +56,7 @@ const HighlightedContent: React.FC<{
     }
 
     return (
-        <pre onMouseUp={onMouseUp} className={`text-sm font-sans whitespace-pre-wrap break-words p-2 rounded-md select-text transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-900/20 border-l-4 border-blue-500' : ''}`}>
+        <pre onMouseUp={onMouseUp} className={`whitespace-pre-wrap break-words p-2 rounded-md select-text transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-200/50 border-l-4 border-blue-500 dark:bg-blue-900/20' : ''} ${fontFamilyClass}`}>
             {parts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>)}
         </pre>
     );

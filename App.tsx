@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { NewLessonForm } from './components/NewLessonForm';
@@ -22,6 +21,37 @@ const App: React.FC = () => {
     const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
 
+    // Font accessibility states
+    const [selectedFontSize, setSelectedFontSize] = useState<number>(() => {
+        try {
+            const savedFontSize = localStorage.getItem('cs-lesson-architect-font-size');
+            return savedFontSize ? parseInt(savedFontSize, 10) : 16; // Default to 16px
+        } catch (error) {
+            console.error("Failed to parse font size from localStorage", error);
+            return 16;
+        }
+    });
+    const [selectedFontFamily, setSelectedFontFamily] = useState<string>(() => {
+        try {
+            const savedFontFamily = localStorage.getItem('cs-lesson-architect-font-family');
+            return savedFontFamily || 'sans-serif'; // Default to sans-serif
+        } catch (error) {
+            console.error("Failed to parse font family from localStorage", error);
+            return 'sans-serif';
+        }
+    });
+
+    // Theme state
+    const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system' | 'accessibility'>(() => {
+        try {
+            const savedTheme = localStorage.getItem('cs-lesson-architect-theme');
+            return (savedTheme as 'light' | 'dark' | 'system' | 'accessibility') || 'system';
+        } catch (error) {
+            console.error("Failed to parse theme from localStorage", error);
+            return 'system';
+        }
+    });
+
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
             document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
@@ -35,9 +65,56 @@ const App: React.FC = () => {
         };
     }, []);
 
+    // Persist folders
     useEffect(() => {
         localStorage.setItem('cs-lesson-architect-folders', JSON.stringify(folders));
     }, [folders]);
+
+    // Persist font size and apply to HTML root
+    useEffect(() => {
+        localStorage.setItem('cs-lesson-architect-font-size', selectedFontSize.toString());
+        // Set font-size on the root html element for global scaling of rem units
+        document.documentElement.style.fontSize = `${selectedFontSize / 16}rem`;
+    }, [selectedFontSize]);
+
+    // Persist font family
+    useEffect(() => {
+        localStorage.setItem('cs-lesson-architect-font-family', selectedFontFamily);
+    }, [selectedFontFamily]);
+
+    // Effect for applying theme
+    useEffect(() => {
+        const htmlElement = document.documentElement;
+        // Remove all theme-related classes first
+        htmlElement.classList.remove('dark', 'theme-accessibility');
+
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+        const applySystemTheme = () => {
+            if (prefersDark.matches) {
+                htmlElement.classList.add('dark');
+            } else {
+                htmlElement.classList.remove('dark'); // Ensure 'dark' is removed if system switches to light
+            }
+        };
+
+        if (selectedTheme === 'dark') {
+            htmlElement.classList.add('dark');
+        } else if (selectedTheme === 'system') {
+            applySystemTheme();
+            prefersDark.addEventListener('change', applySystemTheme);
+        } else if (selectedTheme === 'accessibility') {
+            htmlElement.classList.add('theme-accessibility');
+        }
+
+        // Persist theme to localStorage
+        localStorage.setItem('cs-lesson-architect-theme', selectedTheme);
+
+        return () => {
+            // Cleanup event listener for system theme
+            prefersDark.removeEventListener('change', applySystemTheme);
+        };
+    }, [selectedTheme]);
+
 
     const handleNewLesson = () => {
         setCurrentView('new-lesson');
@@ -127,11 +204,11 @@ const App: React.FC = () => {
     
     if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen text-white p-4">
-                <div className="w-full max-w-lg text-center p-8 bg-gray-800/50 backdrop-blur-2xl border border-gray-600/50 rounded-2xl shadow-2xl shadow-blue-500/10">
-                    <LogoIcon className="w-24 h-24 text-blue-500 mb-6 mx-auto" />
+            <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white p-4">
+                <div className="w-full max-w-lg text-center p-8 bg-white dark:bg-gray-800/50 backdrop-blur-2xl border border-gray-300 dark:border-gray-600/50 rounded-2xl shadow-2xl shadow-blue-500/10">
+                    <LogoIcon className="w-24 h-24 text-blue-600 dark:text-blue-500 mb-6 mx-auto" />
                     <h1 className="text-5xl font-bold mb-4">CS Lesson Architect</h1>
-                    <p className="text-xl text-gray-400 mb-8">Your AI-powered study partner.</p>
+                    <p className="text-xl text-gray-700 dark:text-gray-400 mb-8">Your AI-powered study partner.</p>
                     <button 
                         onClick={() => setIsAuthenticated(true)}
                         className="px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-700 transition-transform transform hover:scale-105"
@@ -146,8 +223,11 @@ const App: React.FC = () => {
 
     const selectedLesson = getSelectedLesson();
 
+    // Dynamically apply font family class
+    const fontFamilyClass = selectedFontFamily === 'serif' ? 'font-serif' : (selectedFontFamily === 'monospace' ? 'font-mono' : ''); // Removed 'font-sans' default here
+
     return (
-        <div className="flex h-screen font-sans">
+        <div className={`flex h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white ${fontFamilyClass}`}>
             <Sidebar
                 folders={folders}
                 selectedLessonId={selectedLessonId}
@@ -156,14 +236,22 @@ const App: React.FC = () => {
                 onAddFolder={handleAddFolder}
                 onRenameFolder={handleRenameFolder}
                 onMoveLesson={handleMoveLesson}
+                // Pass font accessibility props
+                selectedFontSize={selectedFontSize}
+                setSelectedFontSize={setSelectedFontSize}
+                selectedFontFamily={selectedFontFamily}
+                setSelectedFontFamily={setSelectedFontFamily}
+                // Pass theme accessibility props
+                selectedTheme={selectedTheme}
+                setSelectedTheme={setSelectedTheme}
             />
-            <div className="flex-1 bg-gray-900/50 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
                 {currentView === 'new-lesson' && <NewLessonForm folders={folders} onLessonCreated={handleLessonCreated} />}
                 {currentView === 'lesson-view' && selectedLesson && (
-                    <LessonView lesson={selectedLesson} onUpdateLesson={handleUpdateLesson} />
+                    <LessonView lesson={selectedLesson} onUpdateLesson={handleUpdateLesson} selectedFontFamily={selectedFontFamily} />
                 )}
                 {currentView === 'lesson-view' && !selectedLesson && (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-gray-600 dark:text-gray-500">
                         <p>Select a lesson to view or create a new one.</p>
                     </div>
                 )}

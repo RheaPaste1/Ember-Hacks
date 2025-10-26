@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { Folder, Lesson } from '../types';
 import { FolderIcon, FileIcon, PlusIcon, PencilIcon } from './Icons';
@@ -12,9 +10,31 @@ interface SidebarProps {
   onAddFolder: (name: string) => void;
   onRenameFolder: (folderId: string, newName: string) => void;
   onMoveLesson: (lessonId: string, sourceFolderId: string, destinationFolderId: string) => void;
+  // New font accessibility props
+  selectedFontSize: number;
+  setSelectedFontSize: (size: number) => void;
+  selectedFontFamily: string;
+  setSelectedFontFamily: (family: string) => void;
+  // New theme accessibility props
+  selectedTheme: 'light' | 'dark' | 'system' | 'accessibility';
+  setSelectedTheme: (theme: 'light' | 'dark' | 'system' | 'accessibility') => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onSelectLesson, onNewLesson, onAddFolder, onRenameFolder, onMoveLesson }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  folders, 
+  selectedLessonId, 
+  onSelectLesson, 
+  onNewLesson, 
+  onAddFolder, 
+  onRenameFolder, 
+  onMoveLesson,
+  selectedFontSize,
+  setSelectedFontSize,
+  selectedFontFamily,
+  setSelectedFontFamily,
+  selectedTheme,
+  setSelectedTheme,
+}) => {
   const [newFolderName, setNewFolderName] = useState('');
   const [showInput, setShowInput] = useState(false);
 
@@ -43,9 +63,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
   };
 
   return (
-    <aside className="w-72 bg-gray-800/80 backdrop-blur-lg text-gray-300 flex flex-col h-full border-r border-gray-700/50">
-      <div className="p-4 border-b border-gray-700/50">
-        <h1 className="text-xl font-bold text-white">CS Lesson Architect</h1>
+    <aside className="w-72 bg-gray-100 text-gray-800 dark:bg-gray-800/80 dark:text-gray-300 flex flex-col h-full border-r border-gray-300 dark:border-gray-700/50">
+      <div className="p-4 border-b border-gray-300 dark:border-gray-700/50">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">CS Lesson Architect</h1>
       </div>
       <div className="p-4">
         <button
@@ -58,8 +78,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
       </div>
       <nav className="flex-1 px-4 pb-4 space-y-4 overflow-y-auto">
         <div className="flex justify-between items-center">
-            <h2 className="text-xs font-semibold uppercase text-gray-500">Folders</h2>
-            <button onClick={() => setShowInput(true)} className="p-1 text-gray-400 hover:text-white rounded-full">
+            <h2 className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-500">Folders</h2>
+            <button onClick={() => setShowInput(true)} className="p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full">
                 <PlusIcon className="w-4 h-4" />
             </button>
         </div>
@@ -72,7 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                     onChange={(e) => setNewFolderName(e.target.value)}
                     placeholder="New folder name"
                     autoFocus
-                    className="flex-1 bg-gray-700 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 bg-white text-gray-900 text-sm rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddFolder()}
                     onBlur={() => setShowInput(false)}
                 />
@@ -95,9 +115,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                     onMoveLesson(lessonId, sourceFolderId, folder.id);
                 }
             }}
-            className={`rounded-md transition-colors ${draggedOverFolderId === folder.id ? 'bg-gray-700' : ''}`}
+            className={`rounded-md transition-colors ${draggedOverFolderId === folder.id ? 'bg-gray-200 dark:bg-gray-700' : ''}`}
           >
-            <div className="flex items-center space-x-2 text-gray-400 p-1 group">
+            <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 p-1 group">
               <FolderIcon className="w-5 h-5 flex-shrink-0" />
               {editingFolderId === folder.id ? (
                 <input
@@ -107,18 +127,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                     onBlur={handleSaveEdit}
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveEdit()}
                     autoFocus
-                    className="flex-1 bg-gray-900 text-sm rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    className="flex-1 bg-white text-gray-900 text-sm rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-900 dark:text-white"
                 />
               ) : (
                 <>
                   <span className="font-semibold text-sm flex-1 truncate">{folder.name}</span>
-                  <button onClick={() => handleStartEdit(folder)} className="p-1 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-white rounded-full focus:opacity-100">
+                  <button onClick={() => handleStartEdit(folder)} className="p-1 opacity-0 group-hover:opacity-100 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white rounded-full focus:opacity-100">
                       <PencilIcon className="w-4 h-4" />
                   </button>
                 </>
               )}
             </div>
-            <ul className="mt-1 pl-4 border-l border-gray-700/50 space-y-1">
+            <ul className="mt-1 pl-4 border-l border-gray-300 dark:border-gray-700/50 space-y-1">
               {folder.lessons.map(lesson => (
                 <li key={lesson.id}>
                   <a
@@ -136,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                     className={`flex items-center space-x-3 pl-2 pr-1.5 py-1.5 rounded-md text-sm transition-all duration-200 ease-in-out ${
                       lesson.id === selectedLessonId
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                        : 'hover:bg-gray-700 hover:pl-3'
+                        : 'hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
                     <FileIcon className="w-4 h-4 flex-shrink-0" />
@@ -145,12 +165,63 @@ export const Sidebar: React.FC<SidebarProps> = ({ folders, selectedLessonId, onS
                 </li>
               ))}
                {folder.lessons.length === 0 && (
-                <li className="text-xs text-gray-500 pl-2 italic">No lessons yet</li>
+                <li className="text-xs text-gray-500 italic">No lessons yet</li>
                )}
             </ul>
           </div>
         ))}
       </nav>
+      {/* Display Settings moved to the very bottom */}
+      <div className="p-4 border-t border-gray-300 dark:border-gray-700/50">
+          <h2 className="text-xs font-semibold uppercase text-gray-600 dark:text-gray-500 mb-2">Display Settings</h2>
+          
+          {/* Font Size */}
+          <div className="mb-4">
+              <label htmlFor="font-size-select" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Font Size</label>
+              <select
+                  id="font-size-select"
+                  value={selectedFontSize}
+                  onChange={(e) => setSelectedFontSize(parseInt(e.target.value, 10))}
+                  className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                  <option value={14}>Small (14px)</option>
+                  <option value={16}>Medium (16px)</option>
+                  <option value={18}>Large (18px)</option>
+                  <option value={20}>Extra Large (20px)</option>
+              </select>
+          </div>
+
+          {/* Font Family */}
+          <div className="mb-4">
+              <label htmlFor="font-family-select" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Font Family</label>
+              <select
+                  id="font-family-select"
+                  value={selectedFontFamily}
+                  onChange={(e) => setSelectedFontFamily(e.target.value)}
+                  className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                  <option value="sans-serif">Sans-serif</option>
+                  <option value="serif">Serif</option>
+                  <option value="monospace">Monospace</option>
+              </select>
+          </div>
+
+          {/* Theme Selector */}
+          <div>
+              <label htmlFor="theme-select" className="block text-sm font-medium text-gray-700 dark:text-gray-400 mb-1">Theme</label>
+              <select
+                  id="theme-select"
+                  value={selectedTheme}
+                  onChange={(e) => setSelectedTheme(e.target.value as 'light' | 'dark' | 'system' | 'accessibility')}
+                  className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                  <option value="system">System Preference</option>
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                  <option value="accessibility">Accessibility (High Contrast)</option>
+              </select>
+          </div>
+      </div>
     </aside>
   );
 };

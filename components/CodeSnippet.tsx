@@ -38,14 +38,14 @@ const CodeSnippet: React.FC<{
         // Define token types with regex and CSS classes in order of precedence.
         const tokenDefinitions = [
             // Each regex must have ONE capturing group for the content.
-            { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic' },
-            { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-300' },
-            { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-400' },
-            { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-400' },
-            { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-400' },
-            { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-400' },
-            { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-400' },
-            { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-300' },
+            { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic dark:text-gray-400' }, // Adjusted light, kept dark
+            { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-700 dark:text-yellow-300' }, // Adjusted light
+            { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-700 dark:text-fuchsia-400' }, // Adjusted light
+            { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-600 dark:text-orange-400' }, // Adjusted light
+            { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-700 dark:text-cyan-400' }, // Adjusted light
+            { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-700 dark:text-sky-400' }, // Adjusted light
+            { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-700 dark:text-fuchsia-400' }, // Adjusted light
+            { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-600 dark:text-gray-300' }, // Adjusted light
         ];
         
         // Combine all regexes into one for matching.
@@ -59,7 +59,7 @@ const CodeSnippet: React.FC<{
             // Unmatched text before the current match
             if (match.index > lastIndex) {
                 finalElements.push(
-                    <span key={`text-${lastIndex}`} className="text-slate-300">
+                    <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
                         {text.substring(lastIndex, match.index)}
                     </span>
                 );
@@ -77,7 +77,7 @@ const CodeSnippet: React.FC<{
                      if (tokenDef.type === 'function' && /^[A-Z]/.test(match[0])) {
                         const precedingText = text.substring(0, match.index).trim();
                         if (precedingText.endsWith('new')) {
-                            className = 'text-sky-400';
+                            className = 'text-sky-700 dark:text-sky-400'; // Adjusted light
                         }
                      }
                     finalElements.push(
@@ -94,7 +94,7 @@ const CodeSnippet: React.FC<{
             if(!found) {
                 // Fallback for the whole match if no group was identified
                 finalElements.push(
-                    <span key={`text-${lastIndex}`} className="text-slate-300">
+                    <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
                         {match[0]}
                     </span>
                 );
@@ -106,7 +106,7 @@ const CodeSnippet: React.FC<{
         // Remaining text
         if (lastIndex < text.length) {
             finalElements.push(
-                <span key={`text-${lastIndex}`} className="text-slate-300">
+                <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
                     {text.substring(lastIndex)}
                 </span>
             );
@@ -153,15 +153,15 @@ const CodeSnippet: React.FC<{
     };
 
     return (
-        <div className="bg-gray-900 rounded-md overflow-hidden mt-2 border border-gray-700/50">
-            <div className="flex justify-between items-center px-4 py-2 bg-gray-800/50">
-                <span className="text-xs font-sans text-gray-400 uppercase">{language}</span>
-                <button onClick={handleCopy} className="text-xs flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors duration-200">
-                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-400"/> : <ClipboardIcon className="w-4 h-4"/>}
+        <div className="bg-gray-100 rounded-md overflow-hidden mt-2 border border-gray-300 dark:bg-gray-900 dark:border-gray-700/50">
+            <div className="flex justify-between items-center px-4 py-2 bg-gray-200 dark:bg-gray-800/50">
+                <span className="text-xs font-sans text-gray-600 uppercase dark:text-gray-400">{language}</span>
+                <button onClick={handleCopy} className="text-xs flex items-center gap-1.5 text-gray-600 hover:text-gray-900 transition-colors duration-200 dark:text-gray-400 dark:hover:text-white">
+                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-600 dark:text-green-400"/> : <ClipboardIcon className="w-4 h-4"/>}
                     {isCopied ? 'Copied!' : 'Copy'}
                 </button>
             </div>
-            <pre onMouseUp={onMouseUp} className={`p-4 text-sm font-mono whitespace-pre-wrap break-words select-text overflow-x-auto rounded-b-md transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-900/20 border-l-4 border-blue-500' : ''}`}>
+            <pre onMouseUp={onMouseUp} className={`p-4 font-mono whitespace-pre-wrap break-words select-text overflow-x-auto rounded-b-md transition-all duration-300 ease-in-out ${isSpeaking ? 'bg-blue-200/50 border-l-4 border-blue-500 dark:bg-blue-900/20' : ''}`}> {/* Adjusted bg-blue-100/50 to bg-blue-200/50 */}
                 <code>
                     {renderContentWithHighlights()}
                 </code>

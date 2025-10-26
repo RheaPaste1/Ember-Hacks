@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
@@ -208,23 +207,23 @@ const NotePopover: React.FC<{
     }, [isNew]);
     
     return (
-        <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 flex flex-col popover-active">
-            <h5 className="text-sm font-bold text-gray-300 mb-2">Note for: <span className="font-normal italic text-yellow-400">"{annotation.targetText}"</span></h5>
+        <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-white text-gray-900 border border-gray-300 rounded-lg shadow-2xl p-4 flex flex-col popover-active dark:bg-gray-800 dark:text-white dark:border-gray-700">
+            <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Note for: <span className="font-normal italic text-blue-600 dark:text-yellow-400">"{annotation.targetText}"</span></h5>
             <textarea
                 ref={textareaRef}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Write your note here..."
-                className="w-full h-32 bg-gray-900 border border-gray-600 rounded-md p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full h-32 bg-gray-100 border border-gray-300 text-gray-900 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-900 dark:border-gray-600 dark:text-white"
                 aria-label="Annotation note"
             />
             <div className="mt-3 flex justify-between items-center">
-                <button onClick={() => onDelete()} className="p-2 text-gray-400 hover:text-red-400" aria-label="Delete note">
+                <button onClick={() => onDelete()} className="p-2 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400" aria-label="Delete note">
                     <TrashIcon className="w-5 h-5"/>
                 </button>
                 <div className="space-x-2">
-                    <button onClick={onClose} className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded-md text-sm">Cancel</button>
-                    <button onClick={() => onSave(noteText)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-md text-sm">Save</button>
+                    <button onClick={onClose} className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white">Cancel</button>
+                    <button onClick={() => onSave(noteText)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md">Save</button>
                 </div>
             </div>
         </div>
@@ -234,6 +233,7 @@ const NotePopover: React.FC<{
 interface LessonViewProps {
     lesson: Lesson;
     onUpdateLesson: (updatedLesson: Lesson) => void;
+    selectedFontFamily: string; // Add selectedFontFamily prop
 }
 
 const getSelectionOffsets = (element: HTMLElement) => {
@@ -256,7 +256,7 @@ const getSelectionOffsets = (element: HTMLElement) => {
     };
 };
 
-export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }) => {
+export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson, selectedFontFamily }) => {
     const [isChatbotOpen, setIsChatbotOpen] = useState(true);
     const [popover, setPopover] = useState<{ data: Annotation, style: React.CSSProperties, isNew: boolean } | null>(null);
     const contentRef = useRef<HTMLDivElement>(null);
@@ -424,7 +424,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
         <div className="flex h-full overflow-hidden">
             <main 
                 ref={contentRef} 
-                className="flex-1 overflow-y-auto p-8" 
+                className="flex-1 overflow-y-auto p-8 bg-gray-50 dark:bg-gray-900/50" 
                 onMouseUp={(e) => { 
                     const selection = window.getSelection();
                     if (selection?.toString().length === 0 && popover && !(e.target as HTMLElement).closest('.popover-active')) {
@@ -447,17 +447,17 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                         setTitle(lesson.topic);
                                     }
                                 }}
-                                className="text-4xl font-bold tracking-tight bg-gray-700/50 text-white focus:outline-none w-full rounded-md px-2 py-1"
+                                className="text-4xl font-bold tracking-tight bg-gray-100 text-gray-900 focus:outline-none w-full rounded-md px-2 py-1 dark:bg-gray-700/50 dark:text-white"
                                 autoFocus
                             />
                         ) : (
-                            <h1 className="text-4xl font-bold text-white tracking-tight">{lesson.topic}</h1>
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{lesson.topic}</h1>
                         )}
                         {!isEditingTitle && (
                             <>
                                 <button
                                     onClick={() => setIsEditingTitle(true)}
-                                    className="p-2 text-gray-400 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="p-2 text-gray-600 hover:text-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity dark:text-gray-400 dark:hover:text-white"
                                     aria-label="Edit lesson title"
                                 >
                                     <PencilIcon className="w-5 h-5" />
@@ -465,10 +465,10 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                 <button
                                     onClick={handleDownloadPdf}
                                     disabled={isDownloadingPdf}
-                                    className="p-2 text-gray-400 hover:text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="p-2 text-gray-600 hover:text-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-400 dark:hover:text-white"
                                     aria-label="Download lesson as PDF"
                                 >
-                                    {isDownloadingPdf ? <SpinnerIcon className="w-5 h-5"/> : <DownloadIcon className="w-5 h-5" />}
+                                    {isDownloadingPdf ? <SpinnerIcon className="w-5 h-5 text-gray-600 dark:text-gray-500"/> : <DownloadIcon className="w-5 h-5" />}
                                 </button>
                             </>
                         )}
@@ -480,22 +480,23 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                         const codeExampleId = `${concept.id}-codeExample`; // New ID for code examples
                         return (
                              <div key={concept.id} className="mb-8 p-px rounded-xl bg-gradient-to-br from-blue-500/50 via-transparent to-purple-500/50">
-                                <div className="p-6 bg-gray-800 rounded-[11px] shadow-lg">
-                                    <h3 className="text-2xl font-semibold mb-4 text-blue-400">{index + 1}. {concept.term}</h3>
+                                <div className="p-6 bg-white text-gray-900 rounded-[11px] shadow-lg dark:bg-gray-800 dark:text-white">
+                                    <h3 className="text-2xl font-semibold mb-4 text-blue-700 dark:text-blue-400">{index + 1}. {concept.term}</h3>
                                     
                                     <div className="space-y-6">
                                         <div>
                                             <div className="flex items-center justify-between">
-                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
+                                                <h4 className="flex items-center font-bold text-gray-600 uppercase tracking-wider text-sm mb-2 dark:text-gray-400"><BookOpenIcon className="w-4 h-4 mr-2" />Definition</h4>
                                                 {concept.definition && (
-                                                    <button onClick={() => playAudio(concept.definition, definitionId)} className="text-gray-400 hover:text-white transition-colors" title="Read definition aloud">
-                                                        {audioState.id === definitionId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                    <button onClick={() => playAudio(concept.definition, definitionId)} className="text-gray-600 hover:text-gray-900 transition-colors dark:text-gray-400 dark:hover:text-white" title="Read definition aloud">
+                                                        {audioState.id === definitionId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4 text-gray-600 dark:text-gray-500" />}
                                                         {audioState.id === definitionId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
                                                         {audioState.id !== definitionId && <SpeakerWaveIcon className="w-4 h-4" />}
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className="prose prose-invert prose-sm max-w-none p-0 rounded-md select-text">
+                                            {/* Removed prose classes that were overriding global font settings */}
+                                            <div className="max-w-none p-0 rounded-md select-text my-2"> 
                                                 <HighlightedContent 
                                                     text={concept.definition} 
                                                     conceptId={concept.id} 
@@ -504,21 +505,23 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                                     onHighlightClick={handleHighlightClick} 
                                                     onMouseUp={handleMouseUp(concept.id, 'definition')}
                                                     isSpeaking={audioState.id === definitionId && audioState.status === 'playing'}
+                                                    selectedFontFamily={selectedFontFamily}
                                                 />
                                             </div>
                                         </div>
                                         <div>
                                             <div className="flex items-center justify-between">
-                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
+                                                <h4 className="flex items-center font-bold text-gray-600 uppercase tracking-wider text-sm mb-2 dark:text-gray-400"><PencilIcon className="w-4 h-4 mr-2" />Notes & Edge Cases</h4>
                                                 {concept.notes && (
-                                                    <button onClick={() => playAudio(concept.notes, notesId)} className="text-gray-400 hover:text-white transition-colors" title="Read notes aloud">
-                                                        {audioState.id === notesId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                    <button onClick={() => playAudio(concept.notes, notesId)} className="text-gray-600 hover:text-gray-900 transition-colors dark:text-gray-400 dark:hover:text-white" title="Read notes aloud">
+                                                        {audioState.id === notesId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4 text-gray-600 dark:text-gray-500" />}
                                                         {audioState.id === notesId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
                                                         {audioState.id !== notesId && <SpeakerWaveIcon className="w-4 h-4" />}
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className="prose prose-invert prose-sm max-w-none p-0 rounded-md select-text">
+                                            {/* Removed prose classes that were overriding global font settings */}
+                                            <div className="max-w-none p-0 rounded-md select-text my-2">
                                                  <HighlightedContent 
                                                     text={concept.notes} 
                                                     conceptId={concept.id} 
@@ -527,13 +530,14 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                                     onHighlightClick={handleHighlightClick} 
                                                     onMouseUp={handleMouseUp(concept.id, 'notes')}
                                                     isSpeaking={audioState.id === notesId && audioState.status === 'playing'}
+                                                    selectedFontFamily={selectedFontFamily}
                                                  />
                                             </div>
                                         </div>
                                         
                                         {concept.visualExample && concept.visualExample.trim() !== '' && (
                                             <div>
-                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
+                                                <h4 className="flex items-center font-bold text-gray-600 uppercase tracking-wider text-sm mb-2 dark:text-gray-400"><EyeIcon className="w-4 h-4 mr-2" />Visual Example</h4>
                                                 <VisualExampleDisplay 
                                                     prompt={concept.visualExample} 
                                                     onImageLoaded={(url) => handleImageLoaded(concept.id, url)}
@@ -543,9 +547,9 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
 
                                         {concept.codeExample && concept.codeExample.trim() !== '' && (
                                             <div>
-                                                <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
-                                                <button onClick={() => playAudio(concept.codeExample, codeExampleId)} className="text-gray-400 hover:text-white transition-colors ml-auto mb-2 block" title="Read code example aloud">
-                                                    {audioState.id === codeExampleId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                <h4 className="flex items-center font-bold text-gray-600 uppercase tracking-wider text-sm mb-2 dark:text-gray-400"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
+                                                <button onClick={() => playAudio(concept.codeExample, codeExampleId)} className="text-gray-600 hover:text-gray-900 transition-colors ml-auto mb-2 block dark:text-gray-400 dark:hover:text-white" title="Read code example aloud">
+                                                    {audioState.id === codeExampleId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4 text-gray-600 dark:text-gray-500" />}
                                                     {audioState.id === codeExampleId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
                                                     {audioState.id !== codeExampleId && <SpeakerWaveIcon className="w-4 h-4" />}
                                                 </button>
@@ -583,10 +587,10 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                 <div className={`transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isChatbotOpen ? 'w-[400px]' : 'w-0'}`}>
                     <Chatbot lesson={lesson} onUpdateLesson={onUpdateLesson} />
                 </div>
-                 <div className="flex items-center justify-center bg-gray-800/80 backdrop-blur-sm border-l border-gray-700/50">
+                 <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800/80 backdrop-blur-sm border-l border-gray-300 dark:border-gray-700/50">
                     <button 
                         onClick={() => setIsChatbotOpen(!isChatbotOpen)}
-                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700/50 focus:outline-none w-10"
+                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700/50 focus:outline-none w-10"
                         aria-label={isChatbotOpen ? "Hide assistant" : "Show assistant"}
                         aria-expanded={isChatbotOpen}
                     >
