@@ -10,7 +10,7 @@ const parseInline = (text: string): React.ReactNode[] => {
         }
         if (part.startsWith('`') && part.endsWith('`')) {
             // Keep specific syntax highlighting for inline code
-            return <code key={i} className="bg-gray-200 dark:bg-black/20 text-fuchsia-700 dark:text-fuchsia-400 px-1.5 py-1 rounded-md font-mono">{part.slice(1, -1)}</code>;
+            return <code key={i} className="bg-gray-200 dark:bg-black/20 text-fuchsia-700 dark:text-[#D3B7EB] px-1.5 py-1 rounded-md font-mono">{part.slice(1, -1)}</code>;
         }
         return part;
     }).filter(Boolean); // Filter out empty strings from split
@@ -20,12 +20,12 @@ const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
     const tokenDefinitions = [
         // Each regex must have ONE capturing group for the content.
         { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic dark:text-gray-400' }, // Adjusted light, kept dark
-        { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-700 dark:text-yellow-300' }, // Adjusted light
-        { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-700 dark:text-fuchsia-400' }, // Adjusted light
-        { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-600 dark:text-orange-400' }, // Adjusted light
-        { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-700 dark:text-cyan-400' }, // Adjusted light
-        { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-700 dark:text-sky-400' }, // Adjusted light
-        { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-700 dark:text-fuchsia-400' }, // Adjusted light
+        { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-700 dark:text-[#FAD089]' }, // Adjusted light
+        { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-700 dark:text-[#D3B7EB]' }, // Adjusted light
+        { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-600 dark:text-[#A1E8D1]' }, // Adjusted light
+        { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-700 dark:text-[#A7D9FD]' }, // Adjusted light
+        { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-700 dark:text-[#C6E2E9]' }, // Adjusted light
+        { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-700 dark:text-[#D3B7EB]' }, // Adjusted light
         { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-600 dark:text-gray-300' }, // Adjusted light
     ];
     
@@ -40,7 +40,7 @@ const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
         // Unmatched text before the current match
         if (match.index > lastIndex) {
             finalElements.push(
-                <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
+                <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-gray-200"> {/* Adjusted light */}
                     {text.substring(lastIndex, match.index)}
                 </span>
             );
@@ -56,7 +56,7 @@ const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
                  if (tokenDef.type === 'function' && /^[A-Z]/.test(match[0])) {
                     const precedingText = text.substring(0, match.index).trim();
                     if (precedingText.endsWith('new')) {
-                        className = 'text-sky-700 dark:text-sky-400'; // Adjusted light
+                        className = 'text-sky-700 dark:text-[#C6E2E9]'; // Adjusted light
                     }
                  }
                 finalElements.push(
@@ -73,7 +73,7 @@ const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
         if(!found) {
             // Fallback for the whole match if no group was identified
             finalElements.push(
-                <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
+                <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-gray-200"> {/* Adjusted light */}
                     {match[0]}
                 </span>
             );
@@ -85,7 +85,7 @@ const SyntaxHighlightedCode: React.FC<{ text: string }> = ({ text }) => {
     // Remaining text
     if (lastIndex < text.length) {
         finalElements.push(
-            <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-slate-300"> {/* Adjusted light */}
+            <span key={`text-${lastIndex}`} className="text-gray-800 dark:text-gray-200"> {/* Adjusted light */}
                 {text.substring(lastIndex)}
             </span>
         );
@@ -99,7 +99,7 @@ export const Markdown: React.FC<{ content: string }> = ({ content }) => {
     const blocks = content.split(/(```[\s\S]*?```)/g);
 
     return (
-        <div className="break-words text-gray-900 dark:text-white">
+        <div className="break-words text-gray-900 dark:text-gray-200">
             {blocks.map((block, index) => {
                 if (!block || !block.trim()) return null;
 
@@ -110,8 +110,8 @@ export const Markdown: React.FC<{ content: string }> = ({ content }) => {
                     const lang = langMatch ? langMatch[1].trim() : '';
                     const code = lang ? codeBlockContent.substring(langMatch[0].length) : codeBlockContent;
                     return (
-                        <div key={index} className="bg-gray-100 dark:bg-gray-900/80 rounded-lg my-2 text-gray-900 dark:text-white overflow-hidden">
-                            {lang && <div className="text-xs text-gray-600 dark:text-gray-400 px-4 py-2 bg-gray-200 dark:bg-gray-900/50">{lang}</div>}
+                        <div key={index} className="bg-gray-100 dark:bg-[#282828] rounded-lg my-2 text-gray-900 dark:text-gray-200 overflow-hidden">
+                            {lang && <div className="text-xs text-gray-600 dark:text-gray-400 px-4 py-2 bg-gray-200 dark:bg-[#333333]">{lang}</div>}
                             <pre className="p-4 overflow-x-auto font-mono"><code><SyntaxHighlightedCode text={code} /></code></pre>
                         </div>
                     );

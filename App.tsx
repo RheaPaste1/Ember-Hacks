@@ -42,10 +42,10 @@ const App: React.FC = () => {
     });
 
     // Theme state
-    const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system' | 'accessibility'>(() => {
+    const [selectedTheme, setSelectedTheme] = useState<'light' | 'dark' | 'system' | 'accessibility' | 'dark-high-contrast'>(() => {
         try {
             const savedTheme = localStorage.getItem('cs-lesson-architect-theme');
-            return (savedTheme as 'light' | 'dark' | 'system' | 'accessibility') || 'system';
+            return (savedTheme as 'light' | 'dark' | 'system' | 'accessibility' | 'dark-high-contrast') || 'system';
         } catch (error) {
             console.error("Failed to parse theme from localStorage", error);
             return 'system';
@@ -85,35 +85,56 @@ const App: React.FC = () => {
     // Effect for applying theme
     useEffect(() => {
         const htmlElement = document.documentElement;
-        // Remove all theme-related classes first
-        htmlElement.classList.remove('dark', 'theme-accessibility');
-
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
-        const applySystemTheme = () => {
-            if (prefersDark.matches) {
-                htmlElement.classList.add('dark');
-            } else {
-                htmlElement.classList.remove('dark'); // Ensure 'dark' is removed if system switches to light
-            }
-        };
+        
+        // Cleanup function for the media query listener, declared here to be accessible.
+        let systemThemeCleanup: (() => void) | undefined;
 
-        if (selectedTheme === 'dark') {
-            htmlElement.classList.add('dark');
-        } else if (selectedTheme === 'system') {
-            applySystemTheme();
-            prefersDark.addEventListener('change', applySystemTheme);
-        } else if (selectedTheme === 'accessibility') {
-            htmlElement.classList.add('theme-accessibility');
+        // Remove any existing theme classes
+        htmlElement.classList.remove('dark', 'theme-accessibility', 'theme-dark-high-contrast');
+
+        // Apply the chosen theme
+        switch (selectedTheme) {
+            case 'dark':
+                htmlElement.classList.add('dark');
+                break;
+            case 'light':
+                // No specific class needed for light theme
+                break;
+            case 'system':
+                const applySystemTheme = () => {
+                    if (prefersDark.matches) {
+                        htmlElement.classList.add('dark');
+                        htmlElement.classList.remove('theme-accessibility', 'theme-dark-high-contrast'); // Ensure only dark for system dark
+                    } else {
+                        htmlElement.classList.remove('dark', 'theme-accessibility', 'theme-dark-high-contrast'); // Ensure clean for system light
+                    }
+                };
+                applySystemTheme(); // Apply initial system theme
+                prefersDark.addEventListener('change', applySystemTheme);
+                systemThemeCleanup = () => prefersDark.removeEventListener('change', applySystemTheme);
+                break;
+            case 'accessibility':
+                htmlElement.classList.add('theme-accessibility');
+                break;
+            case 'dark-high-contrast':
+                htmlElement.classList.add('theme-dark-high-contrast');
+                break;
         }
 
         // Persist theme to localStorage
         localStorage.setItem('cs-lesson-architect-theme', selectedTheme);
 
+        // Console log for debugging
+        console.log('Applied theme:', selectedTheme, 'HTML classes:', htmlElement.classList.value);
+
+        // Return cleanup function for the effect
         return () => {
-            // Cleanup event listener for system theme
-            prefersDark.removeEventListener('change', applySystemTheme);
+            if (systemThemeCleanup) {
+                systemThemeCleanup(); // Only cleanup the system theme listener if it was set
+            }
         };
-    }, [selectedTheme]);
+    }, [selectedTheme]); // Dependency array ensures effect re-runs when selectedTheme changes
 
 
     const handleNewLesson = () => {
@@ -204,8 +225,8 @@ const App: React.FC = () => {
     
     if (!isAuthenticated) {
         return (
-            <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white p-4">
-                <div className="w-full max-w-lg text-center p-8 bg-white dark:bg-gray-800/50 backdrop-blur-2xl border border-gray-300 dark:border-gray-600/50 rounded-2xl shadow-2xl shadow-blue-500/10">
+            <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-gray-900 dark:bg-[#1A1A1A] dark:text-white p-4">
+                <div className="w-full max-w-lg text-center p-8 bg-white dark:bg-gray-900 backdrop-blur-2xl border border-gray-300 dark:border-gray-600/50 rounded-2xl shadow-2xl shadow-blue-500/10">
                     <LogoIcon className="w-24 h-24 text-blue-600 dark:text-blue-500 mb-6 mx-auto" />
                     <h1 className="text-5xl font-bold mb-4">CS Lesson Architect</h1>
                     <p className="text-xl text-gray-700 dark:text-gray-400 mb-8">Your AI-powered study partner.</p>
@@ -227,7 +248,7 @@ const App: React.FC = () => {
     const fontFamilyClass = selectedFontFamily === 'serif' ? 'font-serif' : (selectedFontFamily === 'monospace' ? 'font-mono' : ''); // Removed 'font-sans' default here
 
     return (
-        <div className={`flex h-screen bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-white ${fontFamilyClass}`}>
+        <div className={`flex h-screen bg-transparent text-gray-900 dark:text-white ${fontFamilyClass}`}>
             <Sidebar
                 folders={folders}
                 selectedLessonId={selectedLessonId}

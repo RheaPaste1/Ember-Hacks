@@ -207,14 +207,14 @@ const NotePopover: React.FC<{
     }, [isNew]);
     
     return (
-        <div ref={popoverRef} style={popoverStyle} className="fixed z-20 w-80 bg-white text-gray-900 border border-gray-300 rounded-lg shadow-2xl p-4 flex flex-col popover-active dark:bg-gray-800 dark:text-white dark:border-gray-700">
-            <h5 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Note for: <span className="font-normal italic text-blue-600 dark:text-yellow-400">"{annotation.targetText}"</span></h5>
+        <div ref={popoverRef} style={popoverStyle} className="note-popover-wrapper fixed z-20 w-80 bg-white text-gray-900 border border-gray-300 rounded-lg shadow-2xl p-4 flex flex-col popover-active dark:bg-[#282828] dark:text-gray-200 dark:border-[#4A4A4A]">
+            <h5 className="text-sm font-bold text-gray-700 dark:text-gray-400 mb-2">Note for: <span className="font-normal italic text-blue-600 dark:text-[#60A5FA]">"{annotation.targetText}"</span></h5>
             <textarea
                 ref={textareaRef}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Write your note here..."
-                className="w-full h-32 bg-gray-100 border border-gray-300 text-gray-900 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-gray-900 dark:border-gray-600 dark:text-white"
+                className="w-full h-32 bg-gray-100 border border-gray-300 text-gray-900 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none dark:bg-[#333333] dark:border-[#4A4A4A] dark:text-gray-200"
                 aria-label="Annotation note"
             />
             <div className="mt-3 flex justify-between items-center">
@@ -222,7 +222,7 @@ const NotePopover: React.FC<{
                     <TrashIcon className="w-5 h-5"/>
                 </button>
                 <div className="space-x-2">
-                    <button onClick={onClose} className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md dark:bg-gray-600 dark:hover:bg-gray-700 dark:text-white">Cancel</button>
+                    <button onClick={onClose} className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md dark:bg-[#4A4A4A] dark:hover:bg-[#555555] dark:text-gray-200">Cancel</button>
                     <button onClick={() => onSave(noteText)} className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-md">Save</button>
                 </div>
             </div>
@@ -424,7 +424,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson, 
         <div className="flex h-full overflow-hidden">
             <main 
                 ref={contentRef} 
-                className="flex-1 overflow-y-auto p-8 bg-gray-50 dark:bg-gray-900/50" 
+                className="flex-1 overflow-y-auto p-8 bg-gray-50 dark:bg-[#1A1A1A]" 
                 onMouseUp={(e) => { 
                     const selection = window.getSelection();
                     if (selection?.toString().length === 0 && popover && !(e.target as HTMLElement).closest('.popover-active')) {
@@ -447,7 +447,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson, 
                                         setTitle(lesson.topic);
                                     }
                                 }}
-                                className="text-4xl font-bold tracking-tight bg-gray-100 text-gray-900 focus:outline-none w-full rounded-md px-2 py-1 dark:bg-gray-700/50 dark:text-white"
+                                className="text-4xl font-bold tracking-tight bg-gray-100 text-gray-900 focus:outline-none w-full rounded-md px-2 py-1 dark:bg-[#333333] dark:text-gray-200"
                                 autoFocus
                             />
                         ) : (
@@ -480,8 +480,8 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson, 
                         const codeExampleId = `${concept.id}-codeExample`; // New ID for code examples
                         return (
                              <div key={concept.id} className="mb-8 p-px rounded-xl bg-gradient-to-br from-blue-500/50 via-transparent to-purple-500/50">
-                                <div className="p-6 bg-white text-gray-900 rounded-[11px] shadow-lg dark:bg-gray-800 dark:text-white">
-                                    <h3 className="text-2xl font-semibold mb-4 text-blue-700 dark:text-blue-400">{index + 1}. {concept.term}</h3>
+                                <div className="lesson-concept-card p-6 bg-white text-gray-900 rounded-[11px] shadow-lg dark:bg-[#282828] dark:text-gray-200">
+                                    <h3 className="text-2xl font-semibold mb-4 text-blue-700 dark:text-[#60A5FA]">{index + 1}. {concept.term}</h3>
                                     
                                     <div className="space-y-6">
                                         <div>
@@ -587,10 +587,10 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson, 
                 <div className={`transition-all duration-300 ease-in-out flex flex-col overflow-hidden ${isChatbotOpen ? 'w-[400px]' : 'w-0'}`}>
                     <Chatbot lesson={lesson} onUpdateLesson={onUpdateLesson} />
                 </div>
-                 <div className="flex items-center justify-center bg-gray-100 dark:bg-gray-800/80 backdrop-blur-sm border-l border-gray-300 dark:border-gray-700/50">
+                 <div className="flex items-center justify-center bg-gray-100 dark:bg-[#212121] backdrop-blur-sm border-l border-gray-300 dark:border-[#4A4A4A]">
                     <button 
                         onClick={() => setIsChatbotOpen(!isChatbotOpen)}
-                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-gray-700/50 focus:outline-none w-10"
+                        className="h-full px-2 py-4 flex flex-col items-center justify-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-200/50 dark:hover:bg-[#333333] focus:outline-none w-10"
                         aria-label={isChatbotOpen ? "Hide assistant" : "Show assistant"}
                         aria-expanded={isChatbotOpen}
                     >

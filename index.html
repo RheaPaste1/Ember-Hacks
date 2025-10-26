@@ -5,8 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CS Lesson Architect</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.27.0",
@@ -17,6 +16,14 @@
   }
 }
 </script>
+  <script>
+    // Configure Tailwind CSS to use 'class' strategy for dark mode.
+    // This allows dark mode to be toggled by adding/removing the 'dark' class on the html element.
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
 <style>
   @keyframes fade-in-up {
     from {
@@ -39,14 +46,178 @@
 
   /* Dark Theme base styles - applied when html has 'dark' class */
   html.dark {
-    background-color: #111827; /* Tailwind gray-900 */
-    color: #e5e7eb; /* Tailwind gray-200 */
+    background-color: #1A1A1A !important; /* Deep gray for overall background */
+    color: #E0E0E0 !important; /* Light gray for primary text */
   }
   html.dark body {
-    background-color: #111827; /* Ensure body matches html background */
+    background-color: #1A1A1A !important; /* Ensure body matches html background */
     background-image: radial-gradient(at 20% 80%, rgba(139, 92, 246, 0.2), transparent),
-                      radial-gradient(at 80% 20%, rgba(37, 99, 235, 0.2), transparent);
+                      radial-gradient(at 80% 20%, rgba(37, 99, 235, 0.2), transparent) !important;
   }
+
+  /* FORCE Dark Theme for main components (deep gray palette) */
+  html.dark aside { /* Sidebar */
+      background-color: #212121 !important;
+  }
+  html.dark main { /* LessonView main content */
+      background-color: #1A1A1A !important;
+  }
+  html.dark .new-lesson-form-wrapper { /* NewLessonForm's inner content div */
+      background-color: #212121 !important;
+  }
+  html.dark .chatbot-wrapper { /* Chatbot's main div */
+      background-color: #212121 !important;
+  }
+  html.dark .lesson-concept-card { /* Main concept cards within LessonView */
+      background-color: #282828 !important;
+  }
+  html.dark .note-popover-wrapper { /* Annotation popover */
+      background-color: #282828 !important;
+  }
+  html.dark .note-popover-wrapper textarea { /* Textarea within annotation popover */
+      background-color: #333333 !important;
+      color: #E0E0E0 !important;
+      border-color: #4A4A4A !important;
+  }
+  html.dark .code-snippet-wrapper { /* Code snippets within LessonView */
+      background-color: #282828 !important;
+  }
+
+  /* Global Tailwind light background overrides for dark theme */
+  html.dark .bg-white,
+  html.dark .bg-gray-50,
+  html.dark .bg-gray-100 {
+      background-color: #212121 !important;
+  }
+  html.dark .bg-gray-200 { /* Used for elements like chat bubbles, code language tags */
+      background-color: #333333 !important;
+  }
+  html.dark .bg-gray-300 { /* If used for backgrounds */
+      background-color: #4A4A4A !important;
+  }
+
+  /* Global Tailwind light text color overrides for dark theme */
+  html.dark .text-gray-900,
+  html.dark .text-gray-800 {
+      color: #E0E0E0 !important;
+  }
+  html.dark .text-gray-700,
+  html.dark .text-gray-600 {
+      color: #B0B0B0 !important;
+  }
+  html.dark .text-gray-500,
+  html.dark .text-gray-400 {
+      color: #A0A0A0 !important;
+  }
+
+  /* Global Tailwind border color overrides for dark theme */
+  html.dark .border-gray-300,
+  html.dark .border-gray-600,
+  html.dark .border-gray-700,
+  html.dark .border-gray-700\/50,
+  html.dark .border-gray-600\/50 {
+      border-color: #4A4A4A !important;
+  }
+
+  /* Input, Textarea, Select specific styles for dark theme */
+  html.dark input,
+  html.dark textarea,
+  html.dark select {
+      background-color: #333333 !important;
+      color: #E0E0E0 !important;
+      border-color: #4A4A4A !important;
+  }
+  html.dark input::placeholder,
+  html.dark textarea::placeholder {
+      color: #A0A0A0 !important;
+  }
+  /* Focus ring adjustment for dark theme */
+  html.dark .focus\:ring-blue-500:focus {
+      --tw-ring-color: #60A5FA !important; /* Medium blue */
+  }
+  html.dark .focus\:ring-offset-blue-500:focus {
+      --tw-ring-offset-color: #60A5FA !important;
+  }
+
+
+  /* Buttons and Accent Colors for dark theme */
+  html.dark .bg-blue-600,
+  html.dark .hover\:bg-blue-700 { /* Primary buttons, user chat bubble */
+      background-color: #4F46E5 !important; /* Indigo/Violet */
+      color: white !important;
+  }
+  html.dark .bg-blue-600 .text-white { /* User icon text within bg-blue-600 */
+      color: white !important;
+  }
+  html.dark .bg-blue-600.text-white { /* User chat bubble text */
+      color: white !important;
+  }
+  html.dark .bg-blue-600.disabled\:bg-gray-600 {
+      background-color: #6B7280 !important; /* Tailwind gray-500 */
+      color: white !important;
+  }
+  html.dark button.hover\:bg-blue-700 { /* Send button hover */
+      background-color: #4338CA !important; /* Slightly darker indigo */
+  }
+
+  html.dark .text-blue-400,
+  html.dark .text-blue-500,
+  html.dark .text-blue-600,
+  html.dark .text-blue-700 { /* Headings, links, focus rings, sparkles icon */
+      color: #60A5FA !important; /* Medium blue */
+  }
+  html.dark .text-purple-600 { /* File Icons */
+      color: #C084FC !important; /* Light purple */
+  }
+
+  /* Code Blocks & Syntax Highlighting for standard dark theme */
+  html.dark pre,
+  html.dark code {
+      background-color: #111111 !important; /* Very dark for code blocks */
+      color: #E0E0E0 !important;
+  }
+  html.dark .bg-black\/20 { /* Darker background for inline code */
+      background-color: rgba(0, 0, 0, 0.4) !important;
+  }
+  /* Syntax highlighting colors for standard dark theme (muted but distinct) */
+  html.dark .text-fuchsia-400,
+  html.dark .text-fuchsia-700 { color: #D3B7EB !important; } /* Soft violet (keywords, operators) */
+  html.dark .text-cyan-400,
+  html.dark .text-cyan-700,
+  html.dark .text-sky-400,
+  html.dark .text-sky-700 { color: #A7D9FD !important; }   /* Soft blue (functions, classes) */
+  html.dark .text-yellow-300,
+  html.dark .text-yellow-700 { color: #FAD089 !important; } /* Soft yellow (strings) */
+  html.dark .text-orange-400,
+  html.dark .text-orange-600 { color: #A1E8D1 !important; } /* Soft green-blue (numbers) */
+  html.dark .text-gray-500.italic,
+  html.dark .text-gray-400 { color: #A0A0A0 !important; } /* Gray (comments) */
+  html.dark .text-gray-800 { color: #E0E0E0 !important; } /* Default code text */
+
+  /* Text-to-Speech & Annotation Highlight for dark theme */
+  html.dark mark {
+      background-color: rgba(255, 255, 0, 0.2) !important; /* Subtle yellow highlight */
+      color: #E0E0E0 !important;
+  }
+  html.dark .bg-blue-200\/50,
+  html.dark .bg-blue-900\/20,
+  html.dark .bg-blue-950\/20 { /* Speech highlight */
+      background-color: rgba(50, 150, 250, 0.15) !important; /* Softer blue */
+  }
+  html.dark .border-blue-500 {
+      border-color: #60A5FA !important; /* Medium blue */
+  }
+
+  /* Popover specific colors for dark theme */
+  html.dark .bg-gray-800.border.border-gray-700.rounded-lg.shadow-2xl.p-4 {
+      background-color: #282828 !important;
+      border-color: #4A4A4A !important;
+  }
+  html.dark .bg-gray-900.border.border-gray-600 {
+      background-color: #212121 !important;
+      border-color: #4A4A4A !important;
+  }
+
 
   /* Accessibility Theme Overrides */
   html.theme-accessibility {
@@ -59,8 +230,10 @@
     background-image: none !important; /* Override radial gradients */
   }
 
+  /* General backgrounds and borders */
   html.theme-accessibility .bg-gray-900,
-  html.theme-accessibility .bg-gray-900\/50 { /* Main app background */
+  html.theme-accessibility .bg-gray-900\/50,
+  html.theme-accessibility .bg-gray-900\/80 { /* Main app background, markdown code blocks */
       background-color: #111 !important;
   }
 
@@ -69,50 +242,71 @@
       background-color: #222 !important;
       border-color: #555 !important;
   }
+  html.theme-accessibility .bg-gray-700 { /* Model chat bubble, inputs, dark mode input */
+      background-color: #333 !important;
+      color: #CCFFCC !important; /* ensure model chat text is light green */
+      border-color: #666 !important;
+  }
+  html.theme-accessibility .bg-gray-100, /* Chatbot main container light mode, code snippet bg light mode */
+  html.theme-accessibility .bg-white { /* Textarea light mode, popover */
+      background-color: #111 !important;
+  }
+  html.theme-accessibility .bg-gray-200 { /* Model chat bubble light mode, sparkle icon parent bg, code block language tag */
+      background-color: #333 !important;
+  }
+  
   html.theme-accessibility .border-gray-700\/50,
   html.theme-accessibility .border-gray-700,
   html.theme-accessibility .border-gray-600\/50,
-  html.theme-accessibility .border-gray-600 {
-      border-color: #555 !important; /* More visible borders */
+  html.theme-accessibility .border-gray-600,
+  html.theme-accessibility .border-gray-300 { /* More visible borders */
+      border-color: #555 !important;
   }
 
-  html.theme-accessibility .text-white {
+  /* Text colors */
+  html.theme-accessibility .text-gray-900,
+  html.theme-accessibility .text-white { /* Primary text for readability */
       color: #CCFFCC !important;
   }
-
   html.theme-accessibility .text-gray-300,
   html.theme-accessibility .text-gray-400,
-  html.theme-accessibility .text-gray-500 {
-      color: #99EE99 !important; /* Lighter green for secondary text */
+  html.theme-accessibility .text-gray-500,
+  html.theme-accessibility .text-gray-600,
+  html.theme-accessibility .text-gray-700 { /* Secondary text, hints, icons */
+      color: #99EE99 !important;
+  }
+  html.theme-accessibility .text-gray-800, /* Base text for code, typically darker gray */
+  html.theme-accessibility .text-slate-300 { /* Similar base text, often used in dark mode */
+      color: #CCFFCC !important;
   }
 
   html.theme-accessibility .bg-blue-600,
   html.theme-accessibility .hover\:bg-blue-700 { /* Primary buttons, user chat bubble */
       background-color: #FFFF00 !important; /* Bright yellow */
-      color: black !important;
-  }
-  html.theme-accessibility .bg-blue-600 .text-white {
       color: black !important; /* Ensure text on yellow buttons is black */
+  }
+  html.theme-accessibility .bg-blue-600 .text-white { /* User icon text within bg-blue-600 */
+      color: black !important; 
+  }
+  html.theme-accessibility .bg-blue-600.text-white { /* User chat bubble text */
+      color: black !important;
   }
   html.theme-accessibility .bg-blue-600.disabled\:bg-gray-600 {
       background-color: #888 !important;
       color: black !important;
   }
-
-  html.theme-accessibility .text-blue-400,
-  html.theme-accessibility .text-blue-500 { /* Headings, links, focus rings */
-      color: #00FFFF !important; /* Cyan */
+  html.theme-accessibility button.hover\:bg-blue-700 { /* Send button hover */
+      background-color: #FFD700 !important; /* Slightly darker yellow */
   }
 
-  html.theme-accessibility .bg-gray-700 { /* Model chat bubble, inputs */
-      background-color: #333 !important;
-      color: #CCFFCC !important;
-      border-color: #666 !important;
+  html.theme-accessibility .text-blue-400,
+  html.theme-accessibility .text-blue-500,
+  html.theme-accessibility .text-blue-600 { /* Headings, links, focus rings, sparkles icon */
+      color: #00FFFF !important; /* Cyan */
   }
   html.theme-accessibility .bg-gray-700 .text-sm {
     color: #CCFFCC !important;
   }
-
 
   /* Code Snippets and Markdown code blocks - maintain monospace, adjust colors for contrast */
   html.theme-accessibility .font-mono {
@@ -125,15 +319,23 @@
       background-color: #000 !important;
       color: #CCFFCC !important;
   }
-  html.theme-accessibility .text-fuchsia-400 { color: #FF00FF !important; } /* Magenta */
-  html.theme-accessibility .text-cyan-400 { color: #00FFFF !important; }   /* Cyan */
-  html.theme-accessibility .text-yellow-300 { color: #FFFF00 !important; } /* Yellow */
-  html.theme-accessibility .text-sky-400 { color: #00CCFF !important; }    /* Light blue */
-  html.theme-accessibility .text-orange-400 { color: #FF8000 !important; } /* Orange */
-  html.theme-accessibility .text-gray-500.italic { color: #888888 !important; } /* Comments */
-  html.theme-accessibility .bg-black\/20 {
-      background-color: rgba(0, 0, 0, 0.4) !important; /* Darker background for inline code */
+  html.theme-accessibility .bg-black\/20 { /* Darker background for inline code */
+      background-color: rgba(0, 0, 0, 0.4) !important; 
   }
+
+  /* Syntax Highlighting specific to accessibility theme */
+  html.theme-accessibility .text-fuchsia-400,
+  html.theme-accessibility .text-fuchsia-700 { color: #FF00FF !important; } /* Magenta */
+  html.theme-accessibility .text-cyan-400,
+  html.theme-accessibility .text-cyan-700 { color: #00FFFF !important; }   /* Cyan */
+  html.theme-accessibility .text-yellow-300,
+  html.theme-accessibility .text-yellow-700 { color: #FFFF00 !important; } /* Yellow */
+  html.theme-accessibility .text-sky-400,
+  html.theme-accessibility .text-sky-700 { color: #00CCFF !important; }    /* Light blue */
+  html.theme-accessibility .text-orange-400,
+  html.theme-accessibility .text-orange-600 { color: #FF8000 !important; } /* Orange */
+  html.theme-accessibility .text-gray-500.italic { color: #888888 !important; } /* Comments */
+
 
   /* Text-to-Speech Highlight */
   html.theme-accessibility .bg-blue-900\/20 {
@@ -158,6 +360,195 @@
       background-color: #111 !important;
       border-color: #444 !important;
   }
+
+  /* Dark High Contrast Theme Overrides */
+  html.theme-dark-high-contrast {
+    background-color: black !important;
+  }
+
+  html.theme-dark-high-contrast body {
+    background-color: black !important;
+    color: white !important; /* Standardized primary text to white */
+    background-image: none !important; /* Override radial gradients */
+  }
+
+  /* FORCE Dark High Contrast Theme for main components */
+  html.theme-dark-high-contrast aside { /* Sidebar */
+      background-color: #111111 !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast main { /* LessonView main content */
+      background-color: black !important;
+  }
+  html.theme-dark-high-contrast .new-lesson-form-wrapper { /* NewLessonForm's inner content div */
+      background-color: #111111 !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast .chatbot-wrapper { /* Chatbot's main div */
+      background-color: #111111 !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast .lesson-concept-card { /* Main concept cards within LessonView */
+      background-color: #222222 !important;
+  }
+  html.theme-dark-high-contrast .note-popover-wrapper { /* Annotation popover */
+      background-color: #222222 !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast .note-popover-wrapper textarea { /* Textarea within annotation popover */
+      background-color: #111111 !important;
+      color: white !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast .code-snippet-wrapper { /* Code snippets within LessonView */
+      background-color: #222222 !important;
+      border-color: #555555 !important;
+  }
+
+  /* General backgrounds and borders */
+  html.theme-dark-high-contrast .bg-gray-950, /* Default sidebar, chatbot */
+  html.theme-dark-high-contrast .bg-gray-900, /* Input background, chat bubbles */
+  html.theme-dark-high-contrast .bg-gray-800 { /* Code snippet header, form backgrounds */
+      background-color: #111111 !important;
+  }
+  html.theme-dark-high-contrast .bg-gray-700 { /* Sidebar hover, chat input button */
+      background-color: #333333 !important;
+  }
+  html.theme-dark-high-contrast .bg-gray-100, /* Light mode defaults */
+  html.theme-dark-high-contrast .bg-gray-200,
+  html.theme-dark-high-contrast .bg-white {
+      background-color: #111111 !important;
+  }
+  
+  html.theme-dark-high-contrast .border-gray-300,
+  html.theme-dark-high-contrast .border-gray-600,
+  html.theme-dark-high-contrast .border-gray-700,
+  html.theme-dark-high-contrast .border-gray-700\/50,
+  html.theme-dark-high-contrast .border-gray-600\/50 {
+      border-color: #555555 !important;
+  }
+
+  /* Text colors */
+  html.theme-dark-high-contrast .text-gray-900,
+  html.theme-dark-high-contrast .text-white { /* Primary text */
+      color: white !important;
+  }
+  html.theme-dark-high-contrast .text-gray-300,
+  html.theme-dark-high-contrast .text-gray-400,
+  html.theme-dark-high-contrast .text-gray-500,
+  html.theme-dark-high-contrast .text-gray-600,
+  html.theme-dark-high-contrast .text-gray-700,
+  html.theme-dark-high-contrast .text-gray-800,
+  html.theme-dark-high-contrast .text-slate-300 { /* Secondary text, hints, icons */
+      color: #CCCCCC !important; /* Lighter gray for secondary text */
+  }
+
+  html.theme-dark-high-contrast .bg-blue-600,
+  html.theme-dark-high-contrast .hover\:bg-blue-700 { /* Primary buttons, user chat bubble */
+      background-color: #00FFFF !important; /* Cyan */
+      color: black !important; /* Ensure text on cyan buttons is black */
+  }
+  html.theme-dark-high-contrast .bg-blue-600 .text-white { /* User icon text within bg-blue-600 */
+      color: black !important; 
+  }
+  html.theme-dark-high-contrast .bg-blue-600.text-white { /* User chat bubble text */
+      color: black !important;
+  }
+  html.theme-dark-high-contrast .bg-blue-600.disabled\:bg-gray-600 {
+      background-color: #888 !important;
+      color: black !important;
+  }
+  html.theme-dark-high-contrast button.hover\:bg-blue-700 { /* Send button hover */
+      background-color: #00CCFF !important; /* Slightly darker cyan */
+  }
+
+  html.theme-dark-high-contrast .text-blue-400,
+  html.theme-dark-high-contrast .text-blue-500,
+  html.theme-dark-high-contrast .text-blue-600,
+  html.theme-dark-high-contrast .text-blue-700 { /* Headings, links, focus rings, sparkles icon */
+      color: #00FFFF !important; /* Cyan */
+  }
+  html.theme-dark-high-contrast .text-purple-600 { /* File Icons */
+      color: #FF00FF !important; /* Magenta */
+  }
+
+  /* Input fields specific adjustments */
+  html.theme-dark-high-contrast input,
+  html.theme-dark-high-contrast textarea,
+  html.theme-dark-high-contrast select {
+      background-color: #111111 !important;
+      color: white !important;
+      border-color: #555555 !important;
+  }
+  html.theme-dark-high-contrast input::placeholder,
+  html.theme-dark-high-contrast textarea::placeholder {
+      color: #999999 !important;
+  }
+  html.theme-dark-high-contrast .focus\:ring-blue-500:focus {
+      --tw-ring-color: #00FFFF !important; /* Cyan focus ring */
+  }
+  html.theme-dark-high-contrast .focus\:ring-offset-blue-500:focus {
+      --tw-ring-offset-color: #00FFFF !important;
+  }
+
+  /* Code Snippets and Markdown code blocks */
+  html.theme-dark-high-contrast .font-mono {
+      font-family: monospace !important;
+      background-color: #111 !important;
+      color: white !important;
+  }
+  html.theme-dark-high-contrast pre,
+  html.theme-dark-high-contrast code {
+      background-color: #111 !important;
+      color: white !important;
+  }
+  html.theme-dark-high-contrast .bg-black\/20 { /* Darker background for inline code */
+      background-color: rgba(0, 0, 0, 0.4) !important; 
+  }
+  html.theme-dark-high-contrast .bg-blue-200\/50 { /* Code speaking highlight */
+      background-color: rgba(0, 255, 255, 0.2) !important;
+      border-color: #00FFFF !important;
+  }
+
+  /* Syntax Highlighting for Dark High Contrast theme */
+  html.theme-dark-high-contrast .text-fuchsia-400,
+  html.theme-dark-high-contrast .text-fuchsia-700 { color: #FF00FF !important; } /* Magenta (keywords, operators) */
+  html.theme-dark-high-contrast .text-cyan-400,
+  html.theme-dark-high-contrast .text-cyan-700,
+  html.theme-dark-high-contrast .text-sky-400,
+  html.theme-dark-high-contrast .text-sky-700 { color: #00FFFF !important; }   /* Cyan (functions, classes) */
+  html.theme-dark-high-contrast .text-yellow-300,
+  html.theme-dark-high-contrast .text-yellow-700 { color: #FFFF00 !important; } /* Yellow (strings) */
+  html.theme-dark-high-contrast .text-orange-400,
+  html.theme-dark-high-contrast .text-orange-600 { color: #00FF00 !important; } /* Lime Green (numbers) */
+  html.theme-dark-high-contrast .text-gray-500.italic,
+  html.theme-dark-high-contrast .text-gray-400 { color: #888888 !important; } /* Gray (comments) */
+  html.theme-dark-high-contrast .text-gray-800 { color: white !important; } /* Default code text */
+
+  /* Text-to-Speech Highlight */
+  html.theme-dark-high-contrast .bg-blue-900\/20 {
+      background-color: rgba(0, 255, 255, 0.2) !important; /* Cyan transparent */
+  }
+  html.theme-dark-high-contrast .border-blue-500 {
+      border-color: #00FFFF !important; /* Cyan border */
+  }
+
+  /* Annotation Highlight */
+  html.theme-dark-high-contrast .bg-yellow-400 {
+      background-color: #FFFF00 !important; /* Bright Yellow */
+      color: black !important; /* Black text on yellow */
+  }
+
+  /* Popover specific colors */
+  html.theme-dark-high-contrast .bg-gray-800.border.border-gray-700.rounded-lg.shadow-2xl.p-4 {
+      background-color: #222 !important;
+      border-color: #555 !important;
+  }
+  html.theme-dark-high-contrast .bg-gray-900.border.border-gray-600 {
+      background-color: #111 !important;
+      border-color: #444 !important;
+  }
+
 </style>
 </head>
   <body class="overflow-x-hidden">

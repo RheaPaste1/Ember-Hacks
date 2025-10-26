@@ -57,19 +57,19 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-100 text-gray-900 dark:bg-gray-800/80 dark:text-gray-300 backdrop-blur-lg border-l border-gray-300 dark:border-gray-700/50 w-[400px]">
-      <div className="p-4 border-b border-gray-300 dark:border-gray-700/50">
+    <div className="chatbot-wrapper flex flex-col h-full bg-gray-100 text-gray-900 dark:bg-[#212121] dark:text-gray-200 backdrop-blur-lg border-l border-gray-300 dark:border-[#4A4A4A] w-[400px]">
+      <div className="p-4 border-b border-gray-300 dark:border-[#4A4A4A]">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Lesson Assistant</h2>
       </div>
       <div className="flex-1 p-4 overflow-y-auto space-y-6">
         {messages.map((msg, index) => (
           <div key={index} className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`}>
              {msg.role === 'model' && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <SparklesIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#333333] flex items-center justify-center flex-shrink-0">
+                    <SparklesIcon className="w-5 h-5 text-blue-600 dark:text-[#60A5FA]" />
                 </div>
              )}
-            <div className={`rounded-lg px-4 py-2 max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white'}`}>
+            <div className={`rounded-lg px-4 py-2 max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900 dark:bg-[#282828] dark:text-gray-200'}`}>
                 {msg.role === 'model' ? 
                   <Markdown content={msg.content} /> : 
                   <pre className="whitespace-pre-wrap break-words">{msg.content}</pre>
@@ -84,17 +84,17 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
         ))}
         {isLoading && messages[messages.length - 1]?.role !== 'model' && (
             <div className="flex justify-start items-start gap-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                    <SparklesIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#333333] flex items-center justify-center flex-shrink-0">
+                    <SparklesIcon className="w-5 h-5 text-blue-600 dark:text-[#60A5FA]" />
                 </div>
-                <div className="bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white rounded-lg px-4 py-2">
-                    <SpinnerIcon className="w-5 h-5 text-gray-600 dark:text-gray-500" />
+                <div className="bg-gray-200 text-gray-900 dark:bg-[#282828] dark:text-gray-200 rounded-lg px-4 py-2">
+                    <SpinnerIcon className="w-5 h-5 text-gray-600 dark:text-[#A0A0A0]" />
                 </div>
             </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 border-t border-gray-300 dark:border-gray-700/50">
+      <div className="p-4 border-t border-gray-300 dark:border-[#4A4A4A]">
         <div className="flex items-center space-x-2">
           <textarea
             value={input}
@@ -106,7 +106,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ lesson, onUpdateLesson }) => {
               }
             }}
             placeholder="Ask a question or give a command..."
-            className="flex-1 bg-white text-gray-900 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none border border-gray-300 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+            className="flex-1 bg-white text-gray-900 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none border border-gray-300 dark:bg-[#333333] dark:text-gray-200 dark:border-[#4A4A4A]"
             rows={2}
             disabled={isLoading}
           />
