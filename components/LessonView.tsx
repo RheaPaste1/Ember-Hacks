@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Lesson, Concept, Annotation } from '../types';
 import { Chatbot } from './Chatbot';
@@ -5,6 +6,8 @@ import { VisualExampleDisplay } from './VisualExampleDisplay';
 import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, BookOpenIcon, PencilIcon, EyeIcon, CodeBracketIcon, ClipboardIcon, CheckIcon, DownloadIcon, SpinnerIcon, SpeakerWaveIcon, StopIcon } from './Icons';
 import { jsPDF } from 'jspdf';
 import { generateSpeech } from '../services/geminiService';
+import HighlightedContent from './HighlightedContent'; // Import the default export
+import CodeSnippet from './CodeSnippet'; // Import CodeSnippet from its dedicated file
 
 
 // Type declaration for the globally available jsPDF library
@@ -169,216 +172,12 @@ const Highlight: React.FC<{ annotation: Annotation, onClick: (e: React.MouseEven
     );
 };
 
-const HighlightedContent: React.FC<{ 
-    text: string, 
-    conceptId: string,
-    fieldName: 'definition' | 'notes', // Removed 'codeExample' as it's handled by CodeSnippet
-    annotations: Annotation[],
-    onHighlightClick: (annotation: Annotation, target: HTMLElement) => void 
-}> = ({ text, conceptId, fieldName, annotations, onHighlightClick }) => {
+// Removed HighlightedContent from here as it's now imported as default export
+// and CodeSnippet is still in the same file to keep it encapsulated for now.
 
-    const relevantAnnotations = annotations
-        .filter(a => a.conceptId === conceptId && a.fieldName === fieldName)
-        .sort((a, b) => a.startIndex - b.startIndex);
+// Removed local declaration of CodeSnippet and its SyntaxHighlightedText helper.
+// It is now imported from './CodeSnippet'.
 
-    if (!text || relevantAnnotations.length === 0) {
-        return <pre className="text-sm font-sans whitespace-pre-wrap break-words">{text}</pre>;
-    }
-    
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-
-    relevantAnnotations.forEach((annotation) => {
-        if (annotation.startIndex > lastIndex) {
-            parts.push(text.substring(lastIndex, annotation.startIndex));
-        }
-        parts.push(
-            <Highlight 
-                key={annotation.id} 
-                annotation={annotation} 
-                onClick={(e) => onHighlightClick(annotation, e.currentTarget)} 
-            />
-        );
-        lastIndex = annotation.endIndex;
-    });
-
-    if (lastIndex < text.length) {
-        parts.push(text.substring(lastIndex));
-    }
-
-    return (
-        <pre className="text-sm font-sans whitespace-pre-wrap break-words">
-            {parts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>)}
-        </pre>
-    );
-};
-
-const CodeSnippet: React.FC<{
-    codeBlock: string;
-    conceptId: string;
-    fieldName: 'codeExample';
-    annotations: Annotation[];
-    onHighlightClick: (annotation: Annotation, target: HTMLElement) => void;
-    onMouseUp: (e: React.MouseEvent<HTMLElement>) => void;
-}> = ({ codeBlock, conceptId, fieldName, annotations, onHighlightClick, onMouseUp }) => {
-    const [isCopied, setIsCopied] = useState(false);
-
-    const parseCodeBlock = (block: string) => {
-        const match = block.match(/^```(\w*)\n([\s\S]*?)```$/);
-        if (match) {
-            const code = match[2].trim();
-            return { language: match[1] || 'plaintext', code };
-        }
-        const trimmedBlock = block.trim();
-        if (trimmedBlock.startsWith('```') && trimmedBlock.endsWith('```')) {
-             return { language: 'plaintext', code: trimmedBlock.slice(3, -3).trim() };
-        }
-        return { language: 'plaintext', code: block };
-    };
-
-    const { language, code } = parseCodeBlock(codeBlock);
-
-    const handleCopy = () => {
-        navigator.clipboard.writeText(code);
-        setIsCopied(true);
-        setTimeout(() => setIsCopied(false), 2000);
-    };
-    
-    const SyntaxHighlightedText: React.FC<{ text: string }> = ({ text }) => {
-        // Define token types with regex and CSS classes in order of precedence.
-        const tokenDefinitions = [
-            // Each regex must have ONE capturing group for the content.
-            { type: 'comment', regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/, className: 'text-gray-500 italic' },
-            { type: 'string', regex: /(".*?"|'.*?'|`.*?`)/, className: 'text-yellow-300' },
-            { type: 'keyword', regex: /\b(public|private|protected|static|final|void|class|interface|enum|extends|implements|new|import|package|return|if|else|for|while|do|switch|case|break|continue|try|catch|finally|throw|throws|const|let|var|function|async|await|export|default|int|boolean|double|float|true|false|null|this|from|of|in|type|instanceof|delete|yield)\b/, className: 'text-fuchsia-400' },
-            { type: 'number', regex: /\b(\d+\.?\d*)\b/, className: 'text-orange-400' },
-            { type: 'function', regex: /(\w+)(?=\s*\()/, className: 'text-cyan-400' },
-            { type: 'className', regex: /\b([A-Z][a-zA-Z0-9_]*)\b/, className: 'text-sky-400' },
-            { type: 'operator', regex: /([=+\-*/%&|<>!^~?:.]+)/, className: 'text-fuchsia-400' },
-            { type: 'punctuation', regex: /([{}()\[\].,;])/, className: 'text-gray-300' },
-        ];
-        
-        // Combine all regexes into one for matching.
-        const masterRegex = new RegExp(tokenDefinitions.map(t => t.regex.source).join('|'), 'g');
-        
-        const finalElements: React.ReactNode[] = [];
-        let lastIndex = 0;
-        let match;
-        
-        while ((match = masterRegex.exec(text)) !== null) {
-            // Unmatched text before the current match
-            if (match.index > lastIndex) {
-                finalElements.push(
-                    <span key={`text-${lastIndex}`} className="text-slate-300">
-                        {text.substring(lastIndex, match.index)}
-                    </span>
-                );
-            }
-    
-            let groupOffset = 1;
-            let found = false;
-            for (const tokenDef of tokenDefinitions) {
-                const numGroupsInRegex = (new RegExp(tokenDef.regex.source + '|')).exec('')!.length - 1;
-                if (match[groupOffset] !== undefined) {
-                    let className = tokenDef.className;
-                     // Heuristic for constructor calls: `new MyClass()`
-                     // `MyClass` matches both 'function' and 'className'. Since `function` is first, it wins.
-                     // We need to correct it to 'className' style if it's preceded by 'new'.
-                     if (tokenDef.type === 'function' && /^[A-Z]/.test(match[0])) {
-                        const precedingText = text.substring(0, match.index).trim();
-                        if (precedingText.endsWith('new')) {
-                            className = 'text-sky-400';
-                        }
-                     }
-                    finalElements.push(
-                        <span key={`token-${match.index}`} className={className}>
-                            {match[0]}
-                        </span>
-                    );
-                    found = true;
-                    break;
-                }
-                groupOffset += numGroupsInRegex;
-            }
-    
-            if(!found) {
-                // Fallback for the whole match if no group was identified
-                finalElements.push(
-                    <span key={`text-${lastIndex}`} className="text-slate-300">
-                        {match[0]}
-                    </span>
-                );
-            }
-    
-            lastIndex = masterRegex.lastIndex;
-        }
-        
-        // Remaining text
-        if (lastIndex < text.length) {
-            finalElements.push(
-                <span key={`text-${lastIndex}`} className="text-slate-300">
-                    {text.substring(lastIndex)}
-                </span>
-            );
-        }
-        
-        return <>{finalElements.map((el, i) => <React.Fragment key={i}>{el}</React.Fragment>)}</>;
-    };
-
-    const renderContentWithHighlights = () => {
-        const relevantAnnotations = annotations
-            .filter(a => a.conceptId === conceptId && a.fieldName === fieldName)
-            .sort((a, b) => a.startIndex - b.startIndex);
-
-        if (relevantAnnotations.length === 0) {
-            return <SyntaxHighlightedText text={code} />;
-        }
-        
-        const contentParts: React.ReactNode[] = [];
-        let lastIndex = 0;
-
-        relevantAnnotations.forEach((annotation) => {
-            if (annotation.startIndex > lastIndex) {
-                const textSegment = code.substring(lastIndex, annotation.startIndex);
-                contentParts.push(<SyntaxHighlightedText key={`text-${lastIndex}`} text={textSegment} />);
-            }
-            contentParts.push(
-                <mark 
-                    key={annotation.id}
-                    onClick={(e) => onHighlightClick(annotation, e.currentTarget)}
-                    className="bg-yellow-400 text-gray-900 font-bold hover:bg-yellow-300 cursor-pointer rounded px-1 py-0.5"
-                >
-                    <SyntaxHighlightedText text={annotation.targetText} />
-                </mark>
-            );
-            lastIndex = annotation.endIndex;
-        });
-
-        if (lastIndex < code.length) {
-            const textSegment = code.substring(lastIndex);
-            contentParts.push(<SyntaxHighlightedText key={`text-${lastIndex}`} text={textSegment} />);
-        }
-
-        return contentParts.map((part, index) => <React.Fragment key={index}>{part}</React.Fragment>);
-    };
-
-    return (
-        <div className="bg-gray-900 rounded-md overflow-hidden mt-2 border border-gray-700/50">
-            <div className="flex justify-between items-center px-4 py-2 bg-gray-800/50">
-                <span className="text-xs font-sans text-gray-400 uppercase">{language}</span>
-                <button onClick={handleCopy} className="text-xs flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors duration-200">
-                    {isCopied ? <CheckIcon className="w-4 h-4 text-green-400"/> : <ClipboardIcon className="w-4 h-4"/>}
-                    {isCopied ? 'Copied!' : 'Copy'}
-                </button>
-            </div>
-            <div onMouseUp={onMouseUp} className="p-4 text-sm font-mono whitespace-pre-wrap break-words select-text overflow-x-auto">
-                <code>
-                    {renderContentWithHighlights()}
-                </code>
-            </div>
-        </div>
-    );
-};
 
 const NotePopover: React.FC<{
     annotation: Annotation;
@@ -473,6 +272,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
     useEffect(() => {
         audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         return () => {
+            currentAudioSourceRef.current?.stop(); // Stop any playing audio on unmount
             audioContextRef.current?.close();
         }
     }, []);
@@ -495,13 +295,13 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
         if (currentAudioSourceRef.current) {
             currentAudioSourceRef.current.stop();
             currentAudioSourceRef.current = null;
+            // If the same audio is clicked again, stop it and reset state
+            if (audioState.id === id && audioState.status === 'playing') {
+                setAudioState({ id: '', status: 'loading' });
+                return;
+            }
         }
-
-        if (audioState.id === id && audioState.status === 'playing') {
-            setAudioState({ id: '', status: 'loading' }); // Stop playing
-            return;
-        }
-
+        
         setAudioState({ id, status: 'loading' });
 
         try {
@@ -518,7 +318,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
             setAudioState({ id, status: 'playing' });
 
             source.onended = () => {
-                setAudioState({ id: '', status: 'loading' });
+                setAudioState({ id: '', status: 'loading' }); // Reset when audio finishes
                 currentAudioSourceRef.current = null;
             };
 
@@ -677,6 +477,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                     {lesson.concepts.map((concept, index) => {
                         const definitionId = `${concept.id}-definition`;
                         const notesId = `${concept.id}-notes`;
+                        const codeExampleId = `${concept.id}-codeExample`; // New ID for code examples
                         return (
                              <div key={concept.id} className="mb-8 p-px rounded-xl bg-gradient-to-br from-blue-500/50 via-transparent to-purple-500/50">
                                 <div className="p-6 bg-gray-800 rounded-[11px] shadow-lg">
@@ -694,8 +495,16 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                                     </button>
                                                 )}
                                             </div>
-                                            <div onMouseUp={handleMouseUp(concept.id, 'definition')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                                <HighlightedContent text={concept.definition} conceptId={concept.id} fieldName="definition" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                            <div className="prose prose-invert prose-sm max-w-none p-0 rounded-md select-text">
+                                                <HighlightedContent 
+                                                    text={concept.definition} 
+                                                    conceptId={concept.id} 
+                                                    fieldName="definition" 
+                                                    annotations={lesson.annotations || []} 
+                                                    onHighlightClick={handleHighlightClick} 
+                                                    onMouseUp={handleMouseUp(concept.id, 'definition')}
+                                                    isSpeaking={audioState.id === definitionId && audioState.status === 'playing'}
+                                                />
                                             </div>
                                         </div>
                                         <div>
@@ -709,8 +518,16 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                                     </button>
                                                 )}
                                             </div>
-                                            <div onMouseUp={handleMouseUp(concept.id, 'notes')} className="prose prose-invert prose-sm max-w-none p-2 rounded-md select-text">
-                                                 <HighlightedContent text={concept.notes} conceptId={concept.id} fieldName="notes" annotations={lesson.annotations || []} onHighlightClick={handleHighlightClick} />
+                                            <div className="prose prose-invert prose-sm max-w-none p-0 rounded-md select-text">
+                                                 <HighlightedContent 
+                                                    text={concept.notes} 
+                                                    conceptId={concept.id} 
+                                                    fieldName="notes" 
+                                                    annotations={lesson.annotations || []} 
+                                                    onHighlightClick={handleHighlightClick} 
+                                                    onMouseUp={handleMouseUp(concept.id, 'notes')}
+                                                    isSpeaking={audioState.id === notesId && audioState.status === 'playing'}
+                                                 />
                                             </div>
                                         </div>
                                         
@@ -727,6 +544,11 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                         {concept.codeExample && concept.codeExample.trim() !== '' && (
                                             <div>
                                                 <h4 className="flex items-center font-bold text-gray-400 uppercase tracking-wider text-sm mb-2"><CodeBracketIcon className="w-4 h-4 mr-2" />Code Example</h4>
+                                                <button onClick={() => playAudio(concept.codeExample, codeExampleId)} className="text-gray-400 hover:text-white transition-colors ml-auto mb-2 block" title="Read code example aloud">
+                                                    {audioState.id === codeExampleId && audioState.status === 'loading' && <SpinnerIcon className="w-4 h-4" />}
+                                                    {audioState.id === codeExampleId && audioState.status === 'playing' && <StopIcon className="w-4 h-4" />}
+                                                    {audioState.id !== codeExampleId && <SpeakerWaveIcon className="w-4 h-4" />}
+                                                </button>
                                                 <CodeSnippet
                                                     codeBlock={concept.codeExample}
                                                     conceptId={concept.id}
@@ -734,6 +556,7 @@ export const LessonView: React.FC<LessonViewProps> = ({ lesson, onUpdateLesson }
                                                     annotations={lesson.annotations || []}
                                                     onHighlightClick={handleHighlightClick}
                                                     onMouseUp={handleMouseUp(concept.id, 'codeExample')}
+                                                    isSpeaking={audioState.id === codeExampleId && audioState.status === 'playing'}
                                                 />
                                             </div>
                                         )}
